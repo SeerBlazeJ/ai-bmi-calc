@@ -59,6 +59,7 @@ This is a Flask-based web application that serves as a personal health and fitne
     ```
 
 5.  **Run the application:**
+    Create a file named `health.db` in the main code directory, and the enter the following command:
     ```bash
     flask run
     ```
