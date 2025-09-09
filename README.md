@@ -78,3 +78,7 @@ To change the secret key, the user needs to edit the key in the .env folder as w
 ```python
 app.config["SECRET_KEY"] = "your_secret_key_here"  # In production, use a secure random key
 ```
+
+## License
+
+This project is licensed under the MIT License.
