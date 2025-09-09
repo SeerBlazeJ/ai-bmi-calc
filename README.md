@@ -71,3 +71,9 @@ This is a Flask-based web application that serves as a personal health and fitne
 2.  Use the **BMI Calculator** to check your BMI.
 3.  Generate personalized **Meal Plans** and **Workout Plans**.
 4.  Chat with the **AI Assistant** for any health and fitness queries.
+
+##Note:
+To change the secret key, the user needs to edit the key in the .env folder as well as moify this line of code:
+```python
+app.config["SECRET_KEY"] = "your_secret_key_here"  # In production, use a secure random key
+```
