@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block header %}HealthBot Assistant{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4>Chat with Kinetic Edge</h4>
+    <div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary me-2">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+        <a href="{{ url_for('logout') }}" class="btn btn-secondary">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+</div>
+<div class="chat-container">
+    <div class="chat-header">
+        <div class="message-avatar bg-success text-white">
+            <i class="fas fa-robot"></i>
+        </div>
+        <div class="flex-grow-1">
+            <h5 class="mb-0">Kinetic Edge</h5>
+            <p class="mb-0 small opacity-75">AI Health Assistant</p>
+        </div>
+        <div class="ms-auto">
+            <span class="badge bg-success">Online</span>
+        </div>
+    </div>
+    
+    <div class="messages" id="chatMessages">
+        <!-- Initial static bot message -->
+        <div class="message bot-message animate-fadeIn">
+            <div class="message-row">
+                <div class="message-avatar bg-success text-white">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-text">
+                        Hello! I'm Kinetic Edge, your AI health assistant. How can I help you today? You can ask me about nutrition, exercise, weight management, or general health advice. Based on your BMI history, if any...
+                    </div>
+                    <div class="message-time-right">Just now</div>
+                </div>
+            </div>
+        </div>
+        
+        {% for message in messages %}
+        <div class="message user-message animate-fadeIn">
+            <div class="message-row flex-row-reverse">
+                <div class="message-avatar bg-primary text-white">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-text">{{ message.message }}</div>
+                    <div class="message-time-right">{{ message.created_at.strftime('%H:%M') }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="message bot-message animate-fadeIn">
+            <div class="message-row">
+                <div class="message-avatar bg-success text-white">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-text">{{ message.response|safe }}</div>
+                    <div class="message-time-right">{{ message.created_at.strftime('%H:%M') }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="chat-input">
+        <input type="text" 
+               id="messageInput" 
+               placeholder="Type your health question..." 
+               autocomplete="off"
+               class="form-control" />
+        <button class="send-btn" id="sendButton">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const messageInput = document.getElementById("messageInput");
+    const chatMessages = document.getElementById("chatMessages");
+    const sendButton = document.getElementById("sendButton");
+    
+    // Auto-scroll to bottom
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Initial scroll
+    scrollToBottom();
+    
+    // Send message function
+    function sendMessage() {
+        const message = messageInput.value.trim();
+        if (!message) return;
+        
+        // Add user message
+        const userMessageHtml = `
+        <div class="message user-message animate-fadeIn">
+            <div class="message-row flex-row-reverse">
+                <div class="message-avatar bg-primary text-white">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-text">${message}</div>
+                    <div class="message-time-right">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+            </div>
+        </div>`;
+        
+        chatMessages.insertAdjacentHTML("beforeend", userMessageHtml);
+        messageInput.value = "";
+        scrollToBottom();
+        
+        // Add typing indicator
+        const botLoadingHtml = `
+        <div class="message bot-message animate-fadeIn">
+            <div class="message-row">
+                <div class="message-avatar bg-success text-white">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-text">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm text-success me-2" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            Thinking...
+                        </div>
+                    </div>
+                    <div class="message-time-right">...</div>
+                </div>
+            </div>
+        </div>`;
+        
+        chatMessages.insertAdjacentHTML("beforeend", botLoadingHtml);
+        scrollToBottom();
+        
+        // Send to server
+        fetch('{{ url_for("send_message") }}', {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `message=${encodeURIComponent(message)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Remove loading indicator
+            const loadingMessage = chatMessages.querySelector('.spinner-border').closest('.message');
+            if (loadingMessage) {
+                loadingMessage.remove();
+            }
+            
+            // Add bot response
+            const botResponseHtml = `
+            <div class="message bot-message animate-fadeIn">
+                <div class="message-row">
+                    <div class="message-avatar bg-success text-white">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-text">${data.response}</div>
+                        <div class="message-time-right">${data.timestamp}</div>
+                    </div>
+                </div>
+            </div>`;
+            
+            chatMessages.insertAdjacentHTML("beforeend", botResponseHtml);
+            scrollToBottom();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            
+            // Remove loading indicator
+            const loadingMessage = chatMessages.querySelector('.spinner-border').closest('.message');
+            if (loadingMessage) {
+                loadingMessage.remove();
+            }
+            
+            // Add error message
+            const errorHtml = `
+            <div class="message bot-message animate-fadeIn">
+                <div class="message-row">
+                    <div class="message-avatar bg-danger text-white">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-text">
+                            I'm having trouble connecting right now. Please try again later.
+                        </div>
+                        <div class="message-time-right">
+                            ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            
+            chatMessages.insertAdjacentHTML("beforeend", errorHtml);
+            scrollToBottom();
+        });
+    }
+    
+    // Event listeners
+    sendButton.addEventListener("click", sendMessage);
+    
+    messageInput.addEventListener("keydown", function(e) {
+        if(e.key === "Enter" && !e.shiftKey){
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // Auto-resize input
+    messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+    
+    // Focus input on load
+    messageInput.focus();
+    
+    // Add some sample questions for new users
+    if ({{ messages|length }} == 0) {
+        setTimeout(() => {
+            const sampleQuestions = [
+                "What's a healthy BMI range?",
+                "How can I lose weight safely?",
+                "What are some good exercises for beginners?",
+                "How much water should I drink daily?"
+            ];
+            
+            const randomQuestion = sampleQuestions[Math.floor(Math.random() * sampleQuestions.length)];
+            
+            const suggestionHtml = `
+            <div class="text-center mb-3">
+                <small class="text-muted">Try asking:</small>
+                <div class="mt-2">
+                    <button class="btn btn-sm btn-outline-primary me-2 sample-question" data-question="${randomQuestion}">
+                        ${randomQuestion}
+                    </button>
+                </div>
+            </div>`;
+            
+            chatMessages.insertAdjacentHTML("beforeend", suggestionHtml);
+            
+            // Add click handlers to sample questions
+            document.querySelectorAll('.sample-question').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    messageInput.value = this.dataset.question;
+                    sendMessage();
+                });
+            });
+        }, 2000);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% block header %}Health Progress{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4>Health Progress</h4>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Dashboard
+    </a>
+</div>
+{% if chart_data.dates|length > 0 %}
+<!-- BMI Progress Chart -->
+<div class="dashboard-card mb-4">
+    <h5><i class="fas fa-chart-line me-2"></i>BMI Progress Over Time</h5>
+    <div class="chart-container" style="position: relative; height: 400px;">
+        <canvas id="bmiChart"></canvas>
+    </div>
+</div>
+<!-- Weight Progress Chart -->
+<div class="dashboard-card mb-4">
+    <h5><i class="fas fa-weight-hanging me-2"></i>Weight Progress Over Time</h5>
+    <div class="chart-container" style="position: relative; height: 400px;">
+        <canvas id="weightChart"></canvas>
+    </div>
+</div>
+<!-- Progress Summary -->
+<div class="dashboard-card mb-4">
+    <h5><i class="fas fa-chart-pie me-2"></i>Progress Summary</h5>
+    <div class="row text-center">
+        <div class="col-md-4">
+            <div class="health-insight">
+                <h6><i class="fas fa-calendar-check"></i> Total Records</h6>
+                <div class="bmi-value" style="font-size: 2.5rem;">{{ chart_data.dates|length }}</div>
+                <p class="text-muted mb-0">BMI entries logged</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="health-insight">
+                <h6><i class="fas fa-chart-line"></i> Latest BMI</h6>
+                <div class="bmi-value" style="font-size: 2.5rem;">{{ chart_data.bmi_values[-1] }}</div>
+                <p class="text-muted mb-0">Current BMI value</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="health-insight">
+                <h6><i class="fas fa-weight"></i> Latest Weight</h6>
+                <div class="bmi-value" style="font-size: 2.5rem;">{{ chart_data.weights[-1] }}kg</div>
+                <p class="text-muted mb-0">Current weight</p>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Progress Insights -->
+<div class="dashboard-card mb-4">
+    <h5><i class="fas fa-lightbulb me-2"></i>Progress Insights</h5>
+    <div class="health-insight">
+        {% if chart_data.dates|length > 1 %}
+        {% set bmi_change = chart_data.bmi_values[-1] - chart_data.bmi_values[0] %}
+        {% set weight_change = chart_data.weights[-1] - chart_data.weights[0] %}
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-trending-up"></i> BMI Trend</h6>
+                {% if bmi_change > 0 %}
+                <p class="mb-0"><span class="text-danger">+{{ bmi_change|round(1) }}</span> increase since first record</p>
+                {% elif bmi_change < 0 %}
+                <p class="mb-0"><span class="text-success">{{ bmi_change|round(1) }}</span> decrease since first record</p>
+                {% else %}
+                <p class="mb-0"><span class="text-info">No change</span> in BMI since first record</p>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-weight-hanging"></i> Weight Trend</h6>
+                {% if weight_change > 0 %}
+                <p class="mb-0"><span class="text-danger">+{{ weight_change|round(1) }}kg</span> gain since first record</p>
+                {% elif weight_change < 0 %}
+                <p class="mb-0"><span class="text-success">{{ weight_change|round(1) }}kg</span> loss since first record</p>
+                {% else %}
+                <p class="mb-0"><span class="text-info">No change</span> in weight since first record</p>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <p class="mb-0">Add more BMI records to see progress trends and insights.</p>
+        {% endif %}
+    </div>
+</div>
+<!-- Quick Actions -->
+<div class="dashboard-card">
+    <h5><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <div class="health-insight h-100">
+                <h6><i class="fas fa-plus-circle"></i> Add New Record</h6>
+                <p class="mb-3">Log your current weight and height</p>
+                <a href="{{ url_for('calculator') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-calculator"></i> Calculate BMI
+                </a>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="health-insight h-100">
+                <h6><i class="fas fa-utensils"></i> Update Meal Plan</h6>
+                <p class="mb-3">Generate a new personalized meal plan</p>
+                <a href="{{ url_for('meal_plan') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-calendar-week"></i> View Meal Plan
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<!-- No Data Available -->
+<div class="dashboard-card text-center">
+    <div class="health-insight">
+        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+        <h5><i class="fas fa-exclamation-triangle"></i> No Progress Data</h5>
+        <p class="mb-4">Start tracking your BMI to see your progress over time!</p>
+        <div class="btn-group justify-content-center">
+            <a href="{{ url_for('calculator') }}" class="btn btn-primary">
+                <i class="fas fa-calculator"></i> Calculate BMI
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const chartData = {{ chart_data | tojson }};
+    
+    if (chartData.dates.length > 0) {
+        // Chart configuration
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: 'white',
+                    bodyColor: 'white',
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    displayColors: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                    }
+                }
+            }
+        };
+        
+        // BMI Chart
+        const bmiCtx = document.getElementById('bmiChart').getContext('2d');
+        new Chart(bmiCtx, {
+            type: 'line',
+            data: {
+                labels: chartData.dates,
+                datasets: [{
+                    label: 'BMI',
+                    data: chartData.bmi_values,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#667eea',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                ...chartOptions,
+                scales: {
+                    ...chartOptions.scales,
+                    y: {
+                        ...chartOptions.scales.y,
+                        title: {
+                            display: true,
+                            text: 'BMI Value',
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Weight Chart
+        const weightCtx = document.getElementById('weightChart').getContext('2d');
+        new Chart(weightCtx, {
+            type: 'line',
+            data: {
+                labels: chartData.dates,
+                datasets: [{
+                    label: 'Weight (kg)',
+                    data: chartData.weights,
+                    borderColor: '#f093fb',
+                    backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#f093fb',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                ...chartOptions,
+                scales: {
+                    ...chartOptions.scales,
+                    y: {
+                        ...chartOptions.scales.y,
+                        title: {
+                            display: true,
+                            text: 'Weight (kg)',
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+<style>
+/* Progress-specific styles */
+.chart-container {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+}
+.health-insight h6 {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+.text-danger {
+    color: var(--danger-color) !important;
+}
+.text-success {
+    color: var(--success-color) !important;
+}
+.text-info {
+    color: var(--primary-color) !important;
+}
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .chart-container {
+        height: 300px !important;
+    }
+    
+    .bmi-value {
+        font-size: 2rem !important;
+    }
+}
+</style>
+{% endblock %}

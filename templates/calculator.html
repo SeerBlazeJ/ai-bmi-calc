@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block header %}BMI Calculator{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4>Calculate your BMI</h4>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Dashboard
+    </a>
+</div>
+<div class="row">
+    <div class="col-lg-5">
+        <div class="dashboard-card">
+            <h5><i class="fas fa-calculator"></i> BMI Calculator</h5>
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="weight" class="form-label">
+                        <i class="fas fa-weight me-2"></i>Weight (kg)
+                    </label>
+                    <input type="number" class="form-control" id="weight" name="weight" 
+                           step="0.1" min="20" max="300" required
+                           placeholder="Enter your weight">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="height" class="form-label">
+                        <i class="fas fa-ruler-vertical me-2"></i>Height (cm)
+                    </label>
+                    <input type="number" class="form-control" id="height" name="height" 
+                           step="0.1" min="100" max="250" required
+                           placeholder="Enter your height">
+                </div>
+                
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-calculator me-2"></i>Calculate BMI
+                    </button>
+                </div>
+            </form>
+            
+            <!-- BMI Information -->
+            <div class="health-insight mt-4">
+                <h6><i class="fas fa-info-circle"></i> BMI Categories</h6>
+                <div class="row text-center">
+                    <div class="col-3">
+                        <div class="bmi-category underweight mb-1">Underweight</div>
+                        <small>&lt; 18.5</small>
+                    </div>
+                    <div class="col-3">
+                        <div class="bmi-category normal mb-1">Normal</div>
+                        <small>18.5 - 24.9</small>
+                    </div>
+                    <div class="col-3">
+                        <div class="bmi-category overweight mb-1">Overweight</div>
+                        <small>25 - 29.9</small>
+                    </div>
+                    <div class="col-3">
+                        <div class="bmi-category obese mb-1">Obese</div>
+                        <small>≥ 30</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-7">
+        <div class="dashboard-card">
+            <h5><i class="fas fa-history me-2"></i>Your BMI History</h5>
+            
+            {% if records %}
+            <div class="table-container">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th><i class="fas fa-calendar"></i> Date</th>
+                            <th></th>
+                            <th><i class="fas fa-weight"></i> Weight</th>
+                            <th><i class="fas fa-ruler-vertical"></i> Height</th>
+                            <th><i class="fas fa-chart-line"></i> BMI</th>
+                            <th><i class="fas fa-tag"></i> Category</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                        <tr>
+                            <td colspan="2">{{ record.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ record.weight }} kg</td>
+                            <td>{{ record.height }} cm</td>
+                            <td><strong>{{ record.bmi }}</strong></td>
+                            <td>
+                                <span class="badge {{ record.category|lower }}">
+                                    {{ record.category }}
+                                </span>
+                            </td>
+                            <td></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Quick Stats - Fixed Display -->
+            <div class="health-insight mt-3">
+                <h6><i class="fas fa-chart-bar"></i> Quick Stats</h6>
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="stat-value">{{ records|length }}</div>
+                        <div class="stat-label">Total Records</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-value">{{ records[0].bmi if records else 'N/A' }}</div>
+                        <div class="stat-label">Latest BMI</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-value">{{ records[0].weight if records else 'N/A' }}kg</div>
+                        <div class="stat-label">Latest Weight</div>
+                    </div>
+                </div>
+            </div>
+            
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                <h5>No BMI Records</h5>
+                <p class="text-muted mb-4">Calculate your first BMI to get started!</p>
+                <div class="btn-group justify-content-center">
+                    <button type="button" class="btn btn-primary" onclick="document.getElementById('weight').focus()">
+                        <i class="fas fa-plus"></i> Add First Record
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<style>
+/* Calculator-specific styles */
+.history-table th {
+    white-space: nowrap;
+}
+.history-table td {
+    vertical-align: middle;
+}
+.badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+}
+/* Fixed statistics display */
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+[data-theme="dark"] .stat-value {
+    color: var(--text-primary);
+}
+[data-theme="dark"] .stat-label {
+    color: var(--text-secondary);
+}
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .table-container {
+        margin: 0 -1rem;
+        border-radius: 0;
+    }
+    
+    .history-table {
+        font-size: 0.875rem;
+    }
+    
+    .history-table th,
+    .history-table td {
+        padding: 0.5rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
