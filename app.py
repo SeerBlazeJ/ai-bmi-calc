@@ -7,14 +7,16 @@ from flask import (
     session,
     flash,
     jsonify,
-    abort,
+    send_from_directory
 )
+import os
 from cs50 import SQL
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
 from datetime import datetime, timedelta
-import ollama
+# import ollama
 from functools import wraps
+from ai_caller import call
 
 # Ensure login_required is defined before any route uses it
 def login_required(f):
@@ -32,60 +34,17 @@ import time
 from urllib.parse import urlparse
 import traceback
 
-'''
-TODO
-gender, previous history, age, activity level should also be taken as an optional input for better personalization in meal planning
-weekly workout  planner with all the required and optional fields for better personalization, just like meal personlization 
-''' 
-# Name of the ollama model to use
-MODEL_NAME = "gemma3"
 # Initialize Flask app
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "your_secret_key_here"  # In production, use a secure random key
-app.config["OLLAMA_HOST"] = "http://localhost:11434"  # Default Ollama host
+app.config["SECRET_KEY"] = "qwertyuiopasdfghjklzxcvbnm"  # In production, use a secure random key
 # Configure logging
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 # A separate Ollama instance dedicated to diet planning
-DIET_MODEL_NAME = "gemma3"
-DIET_OLLAMA_HOST = "http://localhost:11435"
-app.config["DIET_MODEL_NAME"] = DIET_MODEL_NAME
-app.config["DIET_OLLAMA_HOST"] = DIET_OLLAMA_HOST
 diet_ollama_client = None
-DIET_COACH_SYSTEM_PROMPT = """
-You are NutriPlan-GPT, a registered dietitian and nutrition scientist who generates safe, practical, weekly meal plans personalized to BMI category, goals, dietary preferences, and allergies, using evidence-based guidelines for macronutrients and calorie balance while avoiding medical claims beyond general wellness advice.
-OBJECTIVE
-- Create a 7-day meal plan (Monday–Sunday) with breakfast, lunch, dinner, and snacks.
-- Keep daily energy intake within the requested calorie range and align with user goals (weight_loss, weight_gain, maintenance, muscle_gain).
-- Respect dietary preferences (vegetarian, vegan, keto, Mediterranean, etc.) and strictly avoid listed allergies.
-- Keep meals realistic, affordable, and region-agnostic; provide variety across the week.
-OUTPUT FORMAT
-- Output strictly valid minified JSON (no markdown, no commentary) matching this schema:
-{
-  "calories_target": "e.g., 1800-2000 kcal/day",
-  "focus": "short explanation of the plan's focus and macronutrient rationale",
-  "rules": ["max 5-7 bullets with actionable constraints/notes"],
-  "week": {
-    "Monday":    {"breakfast": "...", "lunch": "...", "dinner": "...", "snacks": ["...", "..."]},
-    "Tuesday":   {"breakfast": "...", "lunch": "...", "dinner": "...", "snacks": ["...", "..."]},
-    "Wednesday": {"breakfast": "...", "lunch": "...", "dinner": "...", "snacks": ["...", "..."]},
-    "Thursday":  {"breakfast": "...", "lunch": "...", "dinner": "...", "snacks": ["...", "..."]},
-    "Friday":    {"breakfast": "...", "lunch": "...", "dinner": "...", "snacks": ["...", "..."]},
-    "Saturday":  {"breakfast": "...", "lunch": "...", "dinner": "...", "snacks": ["...", "..."]},
-    "Sunday":    {"breakfast": "...", "lunch": "...", "dinner": "...", "snacks": ["...", "..."]}
-  },
-  "shopping_list": ["consolidated ingredients list for the week"],
-  "notes": ["additional brief guidance for adherence & substitutions"]
-}
-STRICTNESS
-- Output JSON only, no markdown, no backticks, no extra keys.
-- Each meal must be a concise dish name with sensible portions; snacks as short items.
-- Reflect the requested calorie range (±10%) across days.
-- Enforce allergy avoids and preference constraints.
-SAFETY & SCOPE
-- General wellness guidance only; do not diagnose, treat, or replace professional care.
-"""
+with open("diet_coach_prompt.txt", "r") as f:
+    DIET_COACH_SYSTEM_PROMPT = f.read()
 # Initialize CS50 SQL database
 db = SQL("sqlite:///health.db")
 # Database migration to add missing columns
@@ -94,7 +53,7 @@ def migrate_db():
         # Check if updated_at column exists
         result = db.execute("PRAGMA table_info(user_preferences)")
         columns = [row['name'] for row in result]
-        
+
         if 'updated_at' not in columns:
             db.execute("""
                 ALTER TABLE user_preferences
@@ -103,7 +62,7 @@ def migrate_db():
             app.logger.info("Added updated_at column to user_preferences table")
     except Exception as e:
         app.logger.error(f"Migration error: {str(e)}")
-        
+
 # Initialize Database Tables
 def init_db():
     # Weekly Workout Plans table
@@ -127,7 +86,7 @@ def init_db():
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    
+
     # BMI Records table
     db.execute("""
         CREATE TABLE IF NOT EXISTS bmi_records (
@@ -141,7 +100,7 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     """)
-    
+
     # Chat Messages table
     db.execute("""
         CREATE TABLE IF NOT EXISTS chat_messages (
@@ -153,7 +112,7 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     """)
-    
+
     # User Preferences table
     db.execute("""
         CREATE TABLE IF NOT EXISTS user_preferences (
@@ -167,12 +126,14 @@ def init_db():
             age INTEGER,
             activity_level TEXT DEFAULT '',
             previous_history TEXT DEFAULT '',
+            prefered_cuisine TEXT DEFAULT '',
+            meal_frequency TEXT DEFAULT '',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     """)
-    
+
     # Weekly Diet Plans table
     db.execute("""
         CREATE TABLE IF NOT EXISTS weekly_diet_plans (
@@ -192,37 +153,8 @@ def ensure_user_preferences_columns():
     pass
     ensure_column_exists("weekly_workout_plans", "completed_items", "TEXT DEFAULT '{}' ")
 # --- AI Workout Plan Generation ---
-WORKOUT_COACH_SYSTEM_PROMPT = """
-You are FitPlan-GPT, a certified personal trainer and exercise scientist. Generate a safe, practical, weekly workout plan personalized to age, gender, BMI, goals, activity level, and previous history. Use evidence-based guidelines for exercise selection, volume, and progression. Avoid medical claims beyond general fitness advice.
-OBJECTIVE
-- Create a 7-day workout plan (Monday–Sunday) with recommended exercises, sets, reps, and rest days.
-- Align with user goals (weight_loss, muscle_gain, maintenance, general_fitness).
-- Respect injuries, limitations, and previous history.
-- Provide variety and progression, and ensure safety for the user's profile.
-OUTPUT FORMAT
-- Output strictly valid minified JSON (no markdown, no commentary) matching this schema:
-{
-  "focus": "short explanation of the plan's focus and rationale",
-  "rules": ["max 5-7 actionable notes"],
-  "week": {
-    "Monday":    {"workout: [ {"exercise": "...", "sets": 3, "reps": 12, "notes": "..."}, ... ], "rest": false},
-    "Tuesday":     {"workout": [ {"exercise": "...", "sets": 3, "reps": 12, "notes": "..."}, ... ], "rest": false},
-    "Wednesday":    {"workout": [ {"exercise": "...", "sets": 3, "reps": 12, "notes": "..."}, ... ], "rest": false},
-    "Thursday":    {"workout": [ {"exercise": "...", "sets": 3, "reps": 12, "notes": "..."}, ... ], "rest": false},
-    "Friday":    {"workout": [ {"exercise": "...", "sets": 3, "reps": 12, "notes": "..."}, ... ], "rest": false},
-    "Saturday":    {"workout": [ {"exercise": "...", "sets": 3, "reps": 12, "notes": "..."}, ... ], "rest": false},
-    "Sunday":    {"workout": [ {"exercise": "...", "sets": 3, "reps": 12, "notes": "..."}, ... ], "rest": false}, 
-  },
-  "equipment_needed": ["list of equipment (if any)"],
-  "notes": ["additional brief guidance"]
-}
-STRICTNESS
-- Output JSON only, no markdown, no backticks, no extra keys.
-- Each exercise must be a concise name, sets/reps as integers, notes as short strings.
-- Reflect user profile and goals.
-SAFETY & SCOPE
-- General fitness guidance only; do not diagnose, treat, or replace professional care.
-"""
+with open ("workout_coach_prompt.txt", "r") as f:
+    WORKOUT_COACH_SYSTEM_PROMPT = f.read()
 
 def generate_weekly_workout_plan_ai(user_id: int):
     # Gather user profile
@@ -245,54 +177,40 @@ def generate_weekly_workout_plan_ai(user_id: int):
     bmi = latest_bmi[0]["bmi"] if latest_bmi else None
     bmi_category = latest_bmi[0]["category"] if latest_bmi else ""
 
-    # Compose AI prompt
-    system_msg = {"role": "system", "content": WORKOUT_COACH_SYSTEM_PROMPT}
-    user_msg = {
-        "role": "user",
-        "content": json.dumps({
-            "gender": gender,
-            "age": age,
-            "activity_level": activity_level,
-            "previous_history": previous_history,
-            "goals": goals,
-            "bmi": bmi,
-            "bmi_category": bmi_category
-        })
-    }
-    # Use diet_ollama_client for now (or create a new one for workouts if needed)
-    global diet_ollama_client
-    if diet_ollama_client is None:
-        _try_connect_diet_client()
-    def _chat_once():
-        return diet_ollama_client.chat(
-            model=app.config["DIET_MODEL_NAME"],
-            messages=[system_msg, user_msg],
-            options={"temperature": 0.4, "num_ctx": 4096}
-        )
-    try:
-        response = _chat_once()
-    except Exception:
-        if not _spawn_sidecar_server():
-            raise
-        time.sleep(1.5)
-        response = _chat_once()
-    content = response["message"]["content"]
-    plan = extract_json_strict(content)
+    # Compose AI prompt for call()
+    user_info = json.dumps({
+        "gender": gender,
+        "age": age,
+        "activity_level": activity_level,
+        "previous_history": previous_history,
+        "goals": goals,
+        "bmi": bmi,
+        "bmi_category": bmi_category
+    })
+    ai_response = call(
+        sys_prompt=WORKOUT_COACH_SYSTEM_PROMPT,
+        history=previous_history,
+        message=user_info
+    )
+    plan = extract_json_strict(ai_response)
     if not plan or "week" not in plan:
         raise ValueError("Workout AI returned invalid JSON plan")
     today = datetime.now()
     start_of_week = today - timedelta(days=today.weekday())
-    db.execute("""
+    db.execute(
+        """
         INSERT INTO weekly_workout_plans (user_id, week_start_date, plan_data, completed_items)
         VALUES (?, ?, ?, ?)
-    """, user_id, start_of_week.date(), json.dumps(plan, ensure_ascii=False), json.dumps({}))
+        """,
+        user_id, start_of_week.date(), json.dumps(plan, ensure_ascii=False), json.dumps({})
+    )
     return plan
 # --- Workout Plan Routes ---
 @app.route("/workout_plan")
 @login_required
 def workout_plan():
     existing_plan = db.execute("""
-        SELECT * FROM weekly_workout_plans 
+        SELECT * FROM weekly_workout_plans
         WHERE user_id = ? AND week_start_date >= date('now', '-7 days')
         ORDER BY created_at DESC LIMIT 1
     """, session["user_id"])
@@ -322,21 +240,21 @@ def generate_new_workout_plan():
         app.logger.error(f"AI workout plan error: {e}")
         flash("Failed to generate AI workout plan. Please try again.", "danger")
     return redirect(url_for("workout_plan"))
-    ensure_column_exists("user_preferences", "gender", "TEXT DEFAULT ''")
-    ensure_column_exists("user_preferences", "age", "INTEGER")
-    ensure_column_exists("user_preferences", "activity_level", "TEXT DEFAULT ''")
-    ensure_column_exists("user_preferences", "previous_history", "TEXT DEFAULT ''")
-    """Ensure a column exists in a table, add it if it doesn't"""
-    try:
-        # Check if column exists
-        columns = db.execute(f"PRAGMA table_info({table_name})")
-        column_names = [col["name"] for col in columns]
-        
-        if column_name not in column_names:
-            db.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_definition}")
-            app.logger.info(f"Added column {column_name} to table {table_name}")
-    except Exception as e:
-        app.logger.error(f"Error ensuring column {column_name} in {table_name}: {str(e)}")
+    # ensure_column_exists("user_preferences", "gender", "TEXT DEFAULT ''")
+    # ensure_column_exists("user_preferences", "age", "INTEGER")
+    # ensure_column_exists("user_preferences", "activity_level", "TEXT DEFAULT ''")
+    # ensure_column_exists("user_preferences", "previous_history", "TEXT DEFAULT ''")
+    # """Ensure a column exists in a table, add it if it doesn't"""
+    # try:
+    #     # Check if column exists
+    #     columns = db.execute(f"PRAGMA table_info({table_name})")
+    #     column_names = [col["name"] for col in columns]
+
+    #     if column_name not in column_names:
+    #         db.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_definition}")
+    #         app.logger.info(f"Added column {column_name} to table {table_name}")
+    # except Exception as e:
+    #     app.logger.error(f"Error ensuring column {column_name} in {table_name}: {str(e)}")
 # Helper Functions
 def calculate_bmi(weight, height):
     height_m = height / 100
@@ -393,33 +311,19 @@ def clean_ai_response(response):
     response = response.replace("\n", "<br>")
     return response
 def check_ollama_service():
-    """Check if Ollama service is running and the model is available"""
-    try:
-        client = ollama.Client(host=app.config["OLLAMA_HOST"])
-        models = client.list()
-        model_names = [model['name'] for model in models.get('models', [])]
-        
-        if MODEL_NAME not in model_names:
-            app.logger.error(f"Model {MODEL_NAME} not found. Available models: {model_names}")
-            return False, f"Model {MODEL_NAME} not found. Please run 'ollama pull {MODEL_NAME}'"
-        
-        return True, "Ollama service is running"
-    except Exception as e:
-        app.logger.error(f"Ollama service check failed: {str(e)}")
-        return False, f"Ollama service is not running: {str(e)}"
+    # Ollama service is no longer used for AI responses
+    return True, "AI service is now handled by OpenRouter via ai_caller.py."
 def generate_chat_response(user_message, user_id):
+    # try:
+    #     # Use OpenRouter via ai_caller.py for chat responses
+    #     pass  # Implementation to be updated below
+    #         # Test connection to Ollama
+    #     # ollama_client.list()
+    #     app.logger.info("Successfully connected to Ollama")
+    # except Exception as ollama_error:
+    #     app.logger.error(f"Failed to connect to Ollama: {str(ollama_error)}")
+    #    return "I'm having trouble connecting to my AI service right now. Please make sure Ollama is running and try again."
     try:
-        # First check if Ollama is accessible
-        try:
-            # Create a client with the configured host
-            ollama_client = ollama.Client(host=app.config["OLLAMA_HOST"])
-            # Test connection to Ollama
-            ollama_client.list()
-            app.logger.info("Successfully connected to Ollama")
-        except Exception as ollama_error:
-            app.logger.error(f"Failed to connect to Ollama: {str(ollama_error)}")
-            return "I'm having trouble connecting to my AI service right now. Please make sure Ollama is running and try again."
-            
         # Get latest BMI record
         bmi = db.execute("""
             SELECT bmi, category FROM bmi_records
@@ -427,11 +331,11 @@ def generate_chat_response(user_message, user_id):
             ORDER BY created_at DESC
             LIMIT 1
         """, user_id)
-        
+
         bmi_context = ""
         if bmi:
             bmi_context = f"The user's BMI history is {bmi[0]['bmi']} ({bmi[0]['category'].lower()})."
-        
+
         system_prompt = (
             f"You are Kinetic Edge, an AI health assistant specializing in nutrition, fitness, and weight management."
             f"The user prefers to be called as {session['username']}, unless stated otherwise in the chat. Treat it as a nickname and don't take it repeatedly."
@@ -439,7 +343,7 @@ def generate_chat_response(user_message, user_id):
             "Keep responses concise and in the range of 2-3 sentences/ within 25-50 words except if longer responses are absolutely necessary."
             "Keep your tone professional, like a true coach."
         )
-        
+
         # Get previous messages
         previous_messages = db.execute("""
             SELECT message, response FROM chat_messages
@@ -447,26 +351,25 @@ def generate_chat_response(user_message, user_id):
             ORDER BY created_at DESC
             LIMIT 10
         """, user_id)
-        
+
         messages = [{"role": "system", "content": system_prompt}]
         for msg in reversed(previous_messages):
             messages.append({"role": "user", "content": clean_ai_response(msg["message"])})
             messages.append({"role": "assistant", "content": clean_ai_response(msg["response"])})
         messages.append({"role": "user", "content": user_message})
-        
-        try:
-            # Use the configured client for the chat request
-            response = ollama_client.chat(
-                model=MODEL_NAME,
-                messages=messages,
-                options={"temperature": 0.7}
-            )
-            return clean_ai_response(response["message"]["content"])
-        except Exception as chat_error:
-            app.logger.error(f"Error in chat response: {str(chat_error)}")
-            if "model not found" in str(chat_error).lower():
-                return "The AI model is not available. Please make sure you have pulled the Gemma model in Ollama first by running 'ollama pull gemma'."
-            return "I encountered an error while processing your request. Please try again."
+
+        # Use the call function from ai_caller.py
+        # Prepare history string from previous messages
+        history_str = "\n".join([
+            f"User: {clean_ai_response(msg['message'])}\nAI: {clean_ai_response(msg['response'])}"
+            for msg in reversed(previous_messages)
+        ])
+        ai_response = call(
+            sys_prompt=system_prompt,
+            history=history_str,
+            message=user_message
+        )
+        return clean_ai_response(ai_response)
     except Exception as e:
         app.logger.error(f"Error generating chat response: {str(e)}")
         return "Sorry, I'm having trouble processing your request right now."
@@ -479,12 +382,8 @@ def _port_from_host_url(host_url: str) -> int:
     except Exception:
         return 11435
 def _try_connect_diet_client():
-    global diet_ollama_client
-    try:
-        diet_ollama_client = ollama.Client(host=app.config["DIET_OLLAMA_HOST"])
-        return True
-    except Exception:
-        return False
+    # No longer needed for OpenRouter
+    return True
 def _start_diet_sidecar_if_needed():
     _try_connect_diet_client()
 def _spawn_sidecar_server():
@@ -520,7 +419,7 @@ def extract_json_strict(text: str):
 def calorie_hint(bmi_category: str, goals: str) -> str:
     cat = (bmi_category or "").lower()
     goal = (goals or "maintenance").lower()
-    
+
     if goal == "weight_gain":
         return "2400-3000 kcal/day" if cat in ["underweight", "normal"] else "2200-2600 kcal/day"
     if goal == "muscle_gain":
@@ -539,9 +438,9 @@ def generate_weekly_diet_plan_ai(user_id: int):
         return None
     bmi_val = latest_bmi[0]["bmi"]
     bmi_cat = latest_bmi[0]["category"]
-    
+
     prefs = db.execute("""
-        SELECT dietary_preferences, allergies, goals, target_weight, gender, age, activity_level, previous_history
+        SELECT dietary_preferences, allergies, goals, target_weight, gender, age, activity_level, previous_history, meal_frequency, prefered_cuisine
         FROM user_preferences
         WHERE user_id = ?
         ORDER BY created_at DESC LIMIT 1
@@ -554,83 +453,70 @@ def generate_weekly_diet_plan_ai(user_id: int):
     age = prefs[0]["age"] if prefs else None
     activity_level = prefs[0]["activity_level"] if prefs else ""
     previous_history = prefs[0]["previous_history"] if prefs else ""
+    meal_freq = prefs[0]["meal_frequency"] if prefs else ""
+    cuisine = prefs[0]["prefered_cuisine"] if prefs else ""
 
     calorie_range = calorie_hint(bmi_cat, goals)
 
-    system_msg = {"role": "system", "content": DIET_COACH_SYSTEM_PROMPT}
-    user_msg = {
-        "role": "user",
-        "content": json.dumps({
-            "bmi": bmi_val,
-            "bmi_category": bmi_cat,
-            "goals": goals,
-            "target_weight": target_weight,
-            "dietary_preferences": dietary_preferences,
-            "allergies": allergies,
-            "gender": gender,
-            "age": age,
-            "activity_level": activity_level,
-            "previous_history": previous_history,
-            "calorie_range_hint": calorie_range
-        })
-    }
-    
-    global diet_ollama_client
-    if diet_ollama_client is None:
-        _try_connect_diet_client()
-    
-    def _chat_once():
-        return diet_ollama_client.chat(
-            model=app.config["DIET_MODEL_NAME"],
-            messages=[system_msg, user_msg],
-            options={"temperature": 0.4, "num_ctx": 4096}
-        )
-    
-    try:
-        response = _chat_once()
-    except Exception:
-        if not _spawn_sidecar_server():
-            raise
-        time.sleep(1.5)
-        response = _chat_once()
-    
-    content = response["message"]["content"]
-    plan = extract_json_strict(content)
+    # Compose AI prompt for call()
+    user_info = json.dumps({
+        "bmi": bmi_val,
+        "bmi_category": bmi_cat,
+        "goals": goals,
+        "target_weight": target_weight,
+        "dietary_preferences": dietary_preferences,
+        "allergies": allergies,
+        "gender": gender,
+        "age": age,
+        "activity_level": activity_level,
+        "previous_history": previous_history,
+        "calorie_range_hint": calorie_range,
+        "meal_frequency": meal_freq,
+        "cuisine": cuisine
+    })
+    ai_response = call(
+        sys_prompt=DIET_COACH_SYSTEM_PROMPT,
+        history=previous_history,
+        message=user_info
+    )
+    plan = extract_json_strict(ai_response)
     if not plan or "week" not in plan:
         raise ValueError("Diet AI returned invalid JSON plan")
-    
     today = datetime.now()
     start_of_week = today - timedelta(days=today.weekday())
-    db.execute("""
+    db.execute(
+        """
         INSERT INTO weekly_diet_plans (user_id, week_start_date, plan_data, completed_items)
         VALUES (?, ?, ?, ?)
-    """, user_id, start_of_week.date(), json.dumps(plan, ensure_ascii=False), json.dumps({}))
+        """,
+        user_id, start_of_week.date(), json.dumps(plan, ensure_ascii=False), json.dumps({})
+    )
     return plan
 def get_bmi_chart_data(user_id):
     records = db.execute("""
-        SELECT bmi, weight, height, created_at FROM bmi_records 
-        WHERE user_id = ? 
+        SELECT bmi, weight, height, created_at FROM bmi_records
+        WHERE user_id = ?
         ORDER BY created_at ASC
     """, user_id)
-    
+
     chart_data = {
         "dates": [],
         "bmi_values": [],
         "weights": [],
         "heights": []
     }
-    
+
     for record in records:
         if isinstance(record["created_at"], str):
             date_obj = datetime.strptime(record["created_at"], '%Y-%m-%d %H:%M:%S')
         else:
             date_obj = record["created_at"]
-        
+
         chart_data["dates"].append(date_obj.strftime('%m/%d'))
         chart_data["bmi_values"].append(record["bmi"])
         chart_data["weights"].append(record["weight"])
         chart_data["heights"].append(record["height"])
-    
+
     return chart_data
 ## login_required decorator is already defined above all usages, so remove this duplicate
 # Routes
@@ -720,14 +606,14 @@ def calculator():
         WHERE user_id = ?
         ORDER BY created_at DESC
     """, session["user_id"])
-    
+
     for record in records:
         if 'created_at' in record and isinstance(record['created_at'], str):
             try:
                 record['created_at'] = datetime.strptime(record['created_at'], '%Y-%m-%d %H:%M:%S')
             except ValueError:
                 app.logger.error("Failed to parse created_at in calculator")
-    
+
     if request.method == "POST":
         try:
             weight = float(request.form.get("weight", 0))
@@ -757,7 +643,7 @@ def chat():
         WHERE user_id = ?
         ORDER BY created_at ASC
     """, session["user_id"])
-    
+
     for message in messages:
         if 'created_at' in message and isinstance(message['created_at'], str):
             try:
@@ -817,11 +703,11 @@ def generate_new_plan():
 @login_required
 def meal_plan():
     existing_plan = db.execute("""
-        SELECT * FROM weekly_diet_plans 
+        SELECT * FROM weekly_diet_plans
         WHERE user_id = ? AND week_start_date >= date('now', '-7 days')
         ORDER BY created_at DESC LIMIT 1
     """, session["user_id"])
-    
+
     if existing_plan:
         plan_data = json.loads(existing_plan[0]["plan_data"])
         completed_items = json.loads(existing_plan[0]["completed_items"] or "{}")
@@ -830,7 +716,7 @@ def meal_plan():
         plan_data = None
         completed_items = {}
         plan_id = None
-    
+
     return render_template("meal_plan.html",
                            plan_data=plan_data,
                            completed_items=completed_items,
@@ -853,10 +739,12 @@ def preferences():
             age = request.form.get("age", "").strip()
             activity_level = request.form.get("activity_level", "").strip()
             previous_history = request.form.get("previous_history", "").strip()
+            meal_freq = request.form.get("meal_frequency", "").strip()
+            prefered_cuisine = request.form.get("prefered_cuisine", "").strip()
 
             app.logger.info(f"Processing preferences update for user {session['user_id']}")
-            app.logger.info(f"Form data: diet={dietary_preferences}, allergies={allergies}, goals={goals}, weight={target_weight}, gender={gender}, age={age}, activity={activity_level}, history={previous_history}")
-            
+            app.logger.info(f"Form data: diet={dietary_preferences}, allergies={allergies}, goals={goals}, weight={target_weight}, gender={gender}, age={age}, activity={activity_level}, history={previous_history}, meal_frequency = {meal_freq}, cuisine={prefered_cuisine}")
+
             # Process target_weight
             target_weight_float = None
             if target_weight:
@@ -883,17 +771,17 @@ def preferences():
                 except ValueError:
                     flash("Please enter a valid age (numbers only)", "danger")
                     return redirect(url_for("preferences"))
-            
+
             # Validate goals
             valid_goals = ["maintenance", "weight_loss", "weight_gain", "muscle_gain"]
             if goals not in valid_goals:
                 goals = "maintenance"
-            
+
             # Check if user already has preferences
             try:
                 existing_prefs = db.execute("""
-                    SELECT id FROM user_preferences 
-                    WHERE user_id = ? 
+                    SELECT id FROM user_preferences
+                    WHERE user_id = ?
                     ORDER BY created_at DESC LIMIT 1
                 """, session["user_id"])
                 logger.info(f"Found existing preferences: {existing_prefs}")
@@ -909,6 +797,8 @@ def preferences():
                             allergies TEXT DEFAULT '',
                             goals TEXT DEFAULT 'maintenance',
                             target_weight REAL,
+                            prefered_cuisine TEXT DEFAULT '',
+                            meal_frequency TEXT DEFAULT '',
                             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                             FOREIGN KEY (user_id) REFERENCES users (id)
@@ -917,7 +807,7 @@ def preferences():
                     existing_prefs = []
                 else:
                     raise
-            
+
             if existing_prefs:
                 # Update existing preferences
                 try:
@@ -937,26 +827,31 @@ def preferences():
                         "age": age_int,
                         "activity_level": activity_level,
                         "previous_history": previous_history,
+                        "prefered_cuisines": prefered_cuisine,  # Add this line
+                        "meal_frequency": meal_freq,
                         "pref_id": existing_prefs[0]["id"],
                         "user_id": session["user_id"]
                     }
                     app.logger.info(f"Executing update with params: {update_params}")
                     update_query = """
-                        UPDATE user_preferences 
-                        SET dietary_preferences = :diet,
-                            allergies = :allergies,
-                            goals = :goals,
-                            target_weight = :weight,
-                            gender = :gender,
-                            age = :age,
-                            activity_level = :activity_level,
-                            previous_history = :previous_history
-                        WHERE id = :pref_id AND user_id = :user_id
-                    """
+                                    UPDATE user_preferences
+                                    SET dietary_preferences = :diet,
+                                        allergies = :allergies,
+                                        goals = :goals,
+                                        target_weight = :weight,
+                                        gender = :gender,
+                                        age = :age,
+                                        prefered_cuisine = :prefered_cuisines,
+                                        meal_frequency = :meal_frequency,
+                                        activity_level = :activity_level,
+                                        previous_history = :previous_history,
+                                        updated_at = CURRENT_TIMESTAMP
+                                    WHERE id = :pref_id AND user_id = :user_id
+                                """
                     result = db.execute(update_query, **update_params)
                     app.logger.info(f"Update completed successfully")
                     flash("Preferences updated successfully!", "success")
-                    return redirect(url_for("meal_plan"))
+                    return redirect(url_for("preferences"))
                 except Exception as e:
                     error_msg = str(e)
                     app.logger.error(f"Database update error: {error_msg}")
@@ -982,18 +877,20 @@ def preferences():
                         "gender": gender,
                         "age": age_int,
                         "activity_level": activity_level,
-                        "previous_history": previous_history
+                        "previous_history": previous_history,
+                        "meal_frequency": meal_freq,
+                        "prefered_cuisine": prefered_cuisine
                     }
                     app.logger.info(f"Executing insert with params: {insert_params}")
                     insert_query = """
-                        INSERT INTO user_preferences 
-                        (user_id, dietary_preferences, allergies, goals, target_weight, gender, age, activity_level, previous_history)
-                        VALUES (:user_id, :diet, :allergies, :goals, :weight, :gender, :age, :activity_level, :previous_history)
+                        INSERT INTO user_preferences
+                        (user_id, dietary_preferences, allergies, goals, target_weight, gender, age, activity_level, previous_history, meal_frequency, prefered_cuisine)
+                        VALUES (:user_id, :diet, :allergies, :goals, :weight, :gender, :age, :activity_level, :previous_history, :meal_frequency, :prefered_cuisine)
                     """
                     result = db.execute(insert_query, **insert_params)
                     app.logger.info("Insert completed successfully")
                     flash("Preferences saved successfully!", "success")
-                    return redirect(url_for("meal_plan"))
+                    return redirect(url_for("preferences"))
                 except Exception as e:
                     app.logger.error(f"Database insert error: {str(e)}")
                     app.logger.error(traceback.format_exc())
@@ -1004,21 +901,21 @@ def preferences():
             app.logger.error(traceback.format_exc())
             flash("An unexpected error occurred. Please try again.", "danger")
             return redirect(url_for("preferences"))
-    
+
     # Get existing preferences
     try:
         preferences_data = db.execute("""
-            SELECT * FROM user_preferences 
-            WHERE user_id = ? 
-            ORDER BY created_at DESC LIMIT 1
+            SELECT * FROM user_preferences
+            WHERE user_id = ?
+            ORDER BY updated_at DESC LIMIT 1
         """, session["user_id"])
     except Exception as e:
         app.logger.error(f"Error fetching preferences: {str(e)}")
         app.logger.error(traceback.format_exc())
         flash("An error occurred while loading your preferences.", "danger")
         preferences_data = []
-    
-    return render_template("preferences.html", 
+
+    return render_template("preferences.html",
                          preferences=preferences_data[0] if preferences_data else None)
 @app.route("/toggle_meal_item", methods=["POST"])
 @login_required
@@ -1027,26 +924,26 @@ def toggle_meal_item():
         data = request.json
         plan_id = data.get("plan_id")
         item_key = data.get("item_key")
-        
+
         if not plan_id or not item_key:
             return jsonify({"success": False, "error": "Missing plan_id or item_key"})
-        
+
         plan = db.execute("""
             SELECT * FROM weekly_diet_plans WHERE id = ? AND user_id = ?
         """, plan_id, session["user_id"])
-        
+
         if plan:
             completed_items = json.loads(plan[0]["completed_items"] or "{}")
             completed_items[item_key] = not completed_items.get(item_key, False)
-            
+
             db.execute("""
-                UPDATE weekly_diet_plans 
-                SET completed_items = ? 
+                UPDATE weekly_diet_plans
+                SET completed_items = ?
                 WHERE id = ? AND user_id = ?
             """, json.dumps(completed_items), plan_id, session["user_id"])
-            
+
             return jsonify({"success": True, "completed": completed_items[item_key]})
-        
+
         return jsonify({"success": False, "error": "Plan not found"})
     except Exception as e:
         app.logger.error(f"Error toggling meal item: {str(e)}")
@@ -1072,31 +969,40 @@ def toggle_workout_item():
         data = request.json
         plan_id = data.get("plan_id")
         item_key = data.get("item_key")
-        
+
         if not plan_id or not item_key:
             return jsonify({"success": False, "error": "Missing plan_id or item_key"})
-        
+
         plan = db.execute("""
             SELECT * FROM weekly_workout_plans WHERE id = ? AND user_id = ?
         """, plan_id, session["user_id"])
-        
+
         if plan:
             completed_items = json.loads(plan[0]["completed_items"] or "{}")
             completed_items[item_key] = not completed_items.get(item_key, False)
-            
+
             db.execute("""
-                UPDATE weekly_workout_plans 
-                SET completed_items = ? 
+                UPDATE weekly_workout_plans
+                SET completed_items = ?
                 WHERE id = ? AND user_id = ?
             """, json.dumps(completed_items), plan_id, session["user_id"])
-            
+
             return jsonify({"success": True, "completed": completed_items[item_key]})
-        
+
         return jsonify({"success": False, "error": "Plan not found"})
     except Exception as e:
         app.logger.error(f"Error toggling workout item: {str(e)}")
         return jsonify({"success": False, "error": "Internal server error"})
-    
+
+
+@app.route('/favicon.ico')
+def favicon():
+   return send_from_directory(
+       os.path.join(app.root_path, 'static'),
+       'favicon.ico',
+       mimetype='image/vnd.microsoft.icon'
+   )
+
 # Error Handlers
 @app.errorhandler(404)
 def page_not_found(e):
@@ -1115,11 +1021,11 @@ with app.app_context():
     ensure_user_preferences_columns()
 if __name__ == "__main__":
     init_db()
-    
+
     # Check Ollama service before starting the app
     is_running, message = check_ollama_service()
     if not is_running:
         app.logger.error(f"Ollama service issue: {message}")
         print(f"WARNING: {message}")
-    
-    app.run(debug=True, port=5501)
+
+    app.run(host="127.0.0.1",debug=True, port=5501)
