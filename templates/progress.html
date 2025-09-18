@@ -7,43 +7,308 @@
         <i class="fas fa-arrow-left"></i> Dashboard
     </a>
 </div>
-{% if chart_data.dates|length > 0 %}
+<!-- Social Progress Feature: Friends Management -->
+<div class="dashboard-card mb-4">
+    <div class="row">
+        <!-- Friend Progress Legend -->
+        <div class="col-md-6">
+            <h6><i class="fas fa-users me-2"></i>Progress Comparison</h6>
+            <div class="d-flex flex-wrap">
+                <span class="badge bg-primary me-2 mb-2">You ({{ user_username }})</span>
+                {% for friend in friends %}
+                <span class="badge bg-info me-2 mb-2">{{ friend.username }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        <!-- Add Friend Form -->
+        <div class="col-md-6">
+            <form id="addFriendForm" class="d-flex align-items-center mb-2">
+                <input type="text" id="friendUsername" class="form-control me-2" placeholder="Friend's username">
+                <button type="submit" class="btn btn-primary">Send Friend Request</button>
+            </form>
+        </div>
+    </div>
+    <!-- Pending Friend Requests -->
+    <div id="pendingRequests" class="mt-3" style="display: none;">
+        <h6><i class="fas fa-user-clock me-2"></i>Pending Friend Requests</h6>
+        <div id="requestsList" class="list-group">
+            <!-- Requests will be populated here -->
+        </div>
+    </div>
+</div>
+
+<!-- Friend Request Handling Scripts -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Add friend form submission
+        document.getElementById('addFriendForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const username = document.getElementById('friendUsername').value;
+            sendFriendRequest(username);
+        });
+
+        // Load pending friend requests
+        loadPendingRequests();
+
+        // Check for new requests periodically
+        setInterval(loadPendingRequests, 30000); // Check every 30 seconds
+    });
+
+    function sendFriendRequest(username) {
+        fetch('{{ url_for("send_friend_request") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ friend_username: username })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Friend request sent successfully!');
+                    document.getElementById('friendUsername').value = '';
+                } else {
+                    alert(data.error || 'Failed to send friend request');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to send friend request');
+            });
+    }
+
+    function loadPendingRequests() {
+        fetch('{{ url_for("get_friend_requests") }}')
+            .then(response => response.json())
+            .then(data => {
+                const requestsList = document.getElementById('requestsList');
+                const requestsContainer = document.getElementById('pendingRequests');
+
+                if (data.requests && data.requests.length > 0) {
+                    requestsContainer.style.display = 'block';
+                    requestsList.innerHTML = data.requests.map(request => `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>${request.username}</span>
+                    <div class="btn-group">
+                        <button onclick="handleRequest('${request.user_id}', 'accept')" class="btn btn-sm btn-success">
+                            <i class="fas fa-check"></i> Accept
+                        </button>
+                        <button onclick="handleRequest('${request.user_id}', 'reject')" class="btn btn-sm btn-danger">
+                            <i class="fas fa-times"></i> Reject
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+                } else {
+                    requestsContainer.style.display = 'none';
+                }
+            });
+    }
+
+    function handleRequest(senderId, action) {
+        fetch('{{ url_for("handle_friend_request") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                sender_id: senderId,
+                action: action
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    loadPendingRequests(); // Refresh the requests list
+                    if (action === 'accept') {
+                        location.reload(); // Refresh the page to update friends list
+                    }
+                } else {
+                    alert(data.error || 'Failed to handle friend request');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to handle friend request');
+            });
+    }
+</script>
+
+{% if all_chart_data[user_username].dates|length > 0 %}
 <!-- BMI Progress Chart -->
 <div class="dashboard-card mb-4">
-    <h5><i class="fas fa-chart-line me-2"></i>BMI Progress Over Time</h5>
+    <h5><i class="fas fa-chart-line me-2"></i>BMI Progress Comparison</h5>
     <div class="chart-container" style="position: relative; height: 400px;">
         <canvas id="bmiChart"></canvas>
     </div>
 </div>
 <!-- Weight Progress Chart -->
 <div class="dashboard-card mb-4">
-    <h5><i class="fas fa-weight-hanging me-2"></i>Weight Progress Over Time</h5>
+    <h5><i class="fas fa-weight-hanging me-2"></i>Weight Progress Comparison</h5>
     <div class="chart-container" style="position: relative; height: 400px;">
         <canvas id="weightChart"></canvas>
     </div>
 </div>
+
+<!-- Chart Initialization Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const allChartData = JSON.parse('{{ all_chart_data | tojson | safe }}');
+        const userUsername = '{{ user_username }}';
+
+        // Generate random colors for each user
+        const colors = {
+            [userUsername]: '#667eea'  // User's color is always blue
+        };
+
+        Object.keys(allChartData).forEach(username => {
+            if (username !== userUsername) {
+                // Generate a random color for each friend
+                const hue = Math.random() * 360;
+                colors[username] = `hsl(${hue}, 70%, 60%)`;
+            }
+        });
+
+        // Chart configuration
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: 'white',
+                    bodyColor: 'white',
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    displayColors: true
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                    }
+                }
+            }
+        };
+
+        // BMI Chart
+        const bmiCtx = document.getElementById('bmiChart').getContext('2d');
+        new Chart(bmiCtx, {
+            type: 'line',
+            data: {
+                labels: allChartData[userUsername].dates,
+                datasets: Object.entries(allChartData).map(([username, data]) => ({
+                    label: username === userUsername ? `You (${username})` : username,
+                    data: data.bmi_values,
+                    borderColor: colors[username],
+                    backgroundColor: `${colors[username]}20`,
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4,
+                    pointBackgroundColor: colors[username],
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }))
+            },
+            options: {
+                ...chartOptions,
+                scales: {
+                    ...chartOptions.scales,
+                    y: {
+                        ...chartOptions.scales.y,
+                        title: {
+                            display: true,
+                            text: 'BMI Value',
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                        }
+                    }
+                }
+            }
+        });
+
+        // Weight Chart
+        const weightCtx = document.getElementById('weightChart').getContext('2d');
+        new Chart(weightCtx, {
+            type: 'line',
+            data: {
+                labels: allChartData[userUsername].dates,
+                datasets: Object.entries(allChartData).map(([username, data]) => ({
+                    label: username === userUsername ? `You (${username})` : username,
+                    data: data.weights,
+                    borderColor: colors[username],
+                    backgroundColor: `${colors[username]}20`,
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4,
+                    pointBackgroundColor: colors[username],
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }))
+            },
+            options: {
+                ...chartOptions,
+                scales: {
+                    ...chartOptions.scales,
+                    y: {
+                        ...chartOptions.scales.y,
+                        title: {
+                            display: true,
+                            text: 'Weight (kg)',
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
 <!-- Progress Summary -->
 <div class="dashboard-card mb-4">
-    <h5><i class="fas fa-chart-pie me-2"></i>Progress Summary</h5>
+    <h5><i class="fas fa-chart-pie me-2"></i>Your Progress Summary</h5>
     <div class="row text-center">
         <div class="col-md-4">
             <div class="health-insight">
                 <h6><i class="fas fa-calendar-check"></i> Total Records</h6>
-                <div class="bmi-value" style="font-size: 2.5rem;">{{ chart_data.dates|length }}</div>
+                <div class="bmi-value" style="font-size: 2.5rem;">{{ all_chart_data[user_username].dates|length }}</div>
                 <p class="text-muted mb-0">BMI entries logged</p>
             </div>
         </div>
         <div class="col-md-4">
             <div class="health-insight">
                 <h6><i class="fas fa-chart-line"></i> Latest BMI</h6>
-                <div class="bmi-value" style="font-size: 2.5rem;">{{ chart_data.bmi_values[-1] }}</div>
+                <div class="bmi-value" style="font-size: 2.5rem;">{{ all_chart_data[user_username].bmi_values[-1] }}
+                </div>
                 <p class="text-muted mb-0">Current BMI value</p>
             </div>
         </div>
         <div class="col-md-4">
             <div class="health-insight">
                 <h6><i class="fas fa-weight"></i> Latest Weight</h6>
-                <div class="bmi-value" style="font-size: 2.5rem;">{{ chart_data.weights[-1] }}kg</div>
+                <div class="bmi-value" style="font-size: 2.5rem;">{{ all_chart_data[user_username].weights[-1] }}kg
+                </div>
                 <p class="text-muted mb-0">Current weight</p>
             </div>
         </div>
@@ -53,30 +318,32 @@
 <div class="dashboard-card mb-4">
     <h5><i class="fas fa-lightbulb me-2"></i>Progress Insights</h5>
     <div class="health-insight">
-        {% if chart_data.dates|length > 1 %}
-        {% set bmi_change = chart_data.bmi_values[-1] - chart_data.bmi_values[0] %}
-        {% set weight_change = chart_data.weights[-1] - chart_data.weights[0] %}
-        
+        {% if all_chart_data[user_username].dates|length > 1 %}
+        {% set bmi_change = all_chart_data[user_username].bmi_values[-1] - all_chart_data[user_username].bmi_values[0]
+        %}
+        {% set weight_change = all_chart_data[user_username].weights[-1] - all_chart_data[user_username].weights[0] %}
         <div class="row">
             <div class="col-md-6">
                 <h6><i class="fas fa-trending-up"></i> BMI Trend</h6>
                 {% if bmi_change > 0 %}
-                <p class="mb-0"><span class="text-danger">+{{ bmi_change|round(1) }}</span> increase since first record</p>
-                {% elif bmi_change < 0 %}
-                <p class="mb-0"><span class="text-success">{{ bmi_change|round(1) }}</span> decrease since first record</p>
-                {% else %}
-                <p class="mb-0"><span class="text-info">No change</span> in BMI since first record</p>
-                {% endif %}
+                <p class="mb-0"><span class="text-danger">+{{ bmi_change|round(1) }}</span> increase since first record
+                </p>
+                {% elif bmi_change < 0 %} <p class="mb-0"><span class="text-success">{{ bmi_change|round(1) }}</span>
+                    decrease since first record</p>
+                    {% else %}
+                    <p class="mb-0"><span class="text-info">No change</span> in BMI since first record</p>
+                    {% endif %}
             </div>
             <div class="col-md-6">
                 <h6><i class="fas fa-weight-hanging"></i> Weight Trend</h6>
                 {% if weight_change > 0 %}
-                <p class="mb-0"><span class="text-danger">+{{ weight_change|round(1) }}kg</span> gain since first record</p>
-                {% elif weight_change < 0 %}
-                <p class="mb-0"><span class="text-success">{{ weight_change|round(1) }}kg</span> loss since first record</p>
-                {% else %}
-                <p class="mb-0"><span class="text-info">No change</span> in weight since first record</p>
-                {% endif %}
+                <p class="mb-0"><span class="text-danger">+{{ weight_change|round(1) }}kg</span> gain since first record
+                </p>
+                {% elif weight_change < 0 %} <p class="mb-0"><span class="text-success">{{ weight_change|round(1)
+                        }}kg</span> loss since first record</p>
+                    {% else %}
+                    <p class="mb-0"><span class="text-info">No change</span> in weight since first record</p>
+                    {% endif %}
             </div>
         </div>
         {% else %}
@@ -127,155 +394,172 @@
 </div>
 {% endif %}
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const chartData = {{ chart_data | tojson }};
-    
-    if (chartData.dates.length > 0) {
-        // Chart configuration
-        const chartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    titleColor: 'white',
-                    bodyColor: 'white',
-                    borderColor: 'rgba(255, 255, 255, 0.2)',
-                    borderWidth: 1,
-                    cornerRadius: 8,
-                    displayColors: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: false,
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.1)'
-                    },
-                    ticks: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
-                    }
-                },
-                x: {
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.1)'
-                    },
-                    ticks: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
-                    }
-                }
-            }
+    document.addEventListener('DOMContentLoaded', function () {
+        const allChartData = JSON.parse('{{ all_chart_data | tojson | safe }}');
+        const userUsername = '{{ user_username }}';
+
+        // Generate random colors for each user
+        const colors = {
+            [userUsername]: '#667eea'  // User's color is always blue
         };
-        
-        // BMI Chart
-        const bmiCtx = document.getElementById('bmiChart').getContext('2d');
-        new Chart(bmiCtx, {
-            type: 'line',
-            data: {
-                labels: chartData.dates,
-                datasets: [{
-                    label: 'BMI',
-                    data: chartData.bmi_values,
-                    borderColor: '#667eea',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#667eea',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 6,
-                    pointHoverRadius: 8
-                }]
-            },
-            options: {
-                ...chartOptions,
+
+        Object.keys(allChartData).forEach(username => {
+            if (username !== userUsername) {
+                // Generate a random color for each friend
+                const hue = Math.random() * 360;
+                colors[username] = `hsl(${hue}, 70%, 60%)`;
+            }
+        }); if (chartData.dates.length > 0) {
+            // Chart configuration
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: 'white',
+                        bodyColor: 'white',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: false
+                    }
+                },
                 scales: {
-                    ...chartOptions.scales,
                     y: {
-                        ...chartOptions.scales.y,
-                        title: {
-                            display: true,
-                            text: 'BMI Value',
+                        beginAtZero: false,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
                             color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
                         }
                     }
                 }
-            }
-        });
-        
-        // Weight Chart
-        const weightCtx = document.getElementById('weightChart').getContext('2d');
-        new Chart(weightCtx, {
-            type: 'line',
-            data: {
-                labels: chartData.dates,
-                datasets: [{
-                    label: 'Weight (kg)',
-                    data: chartData.weights,
-                    borderColor: '#f093fb',
-                    backgroundColor: 'rgba(240, 147, 251, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#f093fb',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 6,
-                    pointHoverRadius: 8
-                }]
-            },
-            options: {
-                ...chartOptions,
-                scales: {
-                    ...chartOptions.scales,
-                    y: {
-                        ...chartOptions.scales.y,
-                        title: {
-                            display: true,
-                            text: 'Weight (kg)',
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+            };
+
+            // BMI Chart
+            const bmiCtx = document.getElementById('bmiChart').getContext('2d');
+            new Chart(bmiCtx, {
+                type: 'line',
+                data: {
+                    labels: chartData.dates,
+                    datasets: [{
+                        label: 'BMI',
+                        data: chartData.bmi_values,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        ...chartOptions.scales,
+                        y: {
+                            ...chartOptions.scales.y,
+                            title: {
+                                display: true,
+                                text: 'BMI Value',
+                                color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                            }
                         }
                     }
                 }
-            }
-        });
-    }
-});
+            });
+
+            // Weight Chart
+            const weightCtx = document.getElementById('weightChart').getContext('2d');
+            new Chart(weightCtx, {
+                type: 'line',
+                data: {
+                    labels: chartData.dates,
+                    datasets: [{
+                        label: 'Weight (kg)',
+                        data: chartData.weights,
+                        borderColor: '#f093fb',
+                        backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#f093fb',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        ...chartOptions.scales,
+                        y: {
+                            ...chartOptions.scales.y,
+                            title: {
+                                display: true,
+                                text: 'Weight (kg)',
+                                color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
 </script>
 <style>
-/* Progress-specific styles */
-.chart-container {
-    background: var(--card-bg);
-    border-radius: 12px;
-    padding: 1rem;
-    border: 1px solid var(--border-color);
-}
-.health-insight h6 {
-    color: var(--primary-color);
-    font-weight: 600;
-}
-.text-danger {
-    color: var(--danger-color) !important;
-}
-.text-success {
-    color: var(--success-color) !important;
-}
-.text-info {
-    color: var(--primary-color) !important;
-}
-/* Responsive adjustments */
-@media (max-width: 768px) {
+    /* Progress-specific styles */
     .chart-container {
-        height: 300px !important;
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px solid var(--border-color);
     }
-    
-    .bmi-value {
-        font-size: 2rem !important;
+
+    .health-insight h6 {
+        color: var(--primary-color);
+        font-weight: 600;
     }
-}
+
+    .text-danger {
+        color: var(--danger-color) !important;
+    }
+
+    .text-success {
+        color: var(--success-color) !important;
+    }
+
+    .text-info {
+        color: var(--primary-color) !important;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .chart-container {
+            height: 300px !important;
+        }
+
+        .bmi-value {
+            font-size: 2rem !important;
+        }
+    }
 </style>
 {% endblock %}
