@@ -14,9 +14,17 @@ from cs50 import SQL
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
 from datetime import datetime, timedelta
-# import ollama
 from functools import wraps
 from ai_caller import call
+import json
+import os
+import subprocess
+import time
+from urllib.parse import urlparse
+import traceback
+import matplotlib.pyplot as plt
+import io
+import base64
 
 # Ensure login_required is defined before any route uses it
 def login_required(f):
@@ -27,12 +35,7 @@ def login_required(f):
             return redirect(url_for("login"))
         return f(*args, **kwargs)
     return decorated_function
-import json
-import os
-import subprocess
-import time
-from urllib.parse import urlparse
-import traceback
+
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -41,27 +44,10 @@ app.config["SECRET_KEY"] = "qwertyuiopasdfghjklzxcvbnm"  # In production, use a 
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-# A separate Ollama instance dedicated to diet planning
-diet_ollama_client = None
 with open("diet_coach_prompt.txt", "r") as f:
     DIET_COACH_SYSTEM_PROMPT = f.read()
 # Initialize CS50 SQL database
 db = SQL("sqlite:///health.db")
-# Database migration to add missing columns
-def migrate_db():
-    try:
-        # Check if updated_at column exists
-        result = db.execute("PRAGMA table_info(user_preferences)")
-        columns = [row['name'] for row in result]
-
-        if 'updated_at' not in columns:
-            db.execute("""
-                ALTER TABLE user_preferences
-                ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            """)
-            app.logger.info("Added updated_at column to user_preferences table")
-    except Exception as e:
-        app.logger.error(f"Migration error: {str(e)}")
 
 # Initialize Database Tables
 def init_db():
@@ -134,7 +120,7 @@ def init_db():
         )
     """)
 
-    # Weekly Diet Plans table
+    # Weekly Diet Plaminutesns table
     db.execute("""
         CREATE TABLE IF NOT EXISTS weekly_diet_plans (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -146,15 +132,55 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     """)
-def ensure_column_exists(table_name, column_name, column_definition):
-    pass
-# Helper to ensure new columns exist
-def ensure_user_preferences_columns():
-    pass
-    ensure_column_exists("weekly_workout_plans", "completed_items", "TEXT DEFAULT '{}' ")
+
+    db.execute("""
+    CREATE TABLE IF NOT EXISTS user_connections (
+        user_id INTEGER NOT NULL,
+        friend_id INTEGER NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id),
+        FOREIGN KEY (friend_id) REFERENCES users (id),
+        UNIQUE(user_id, friend_id),
+        CHECK(status IN ('pending', 'accepted', 'rejected'))
+    )
+    """)
+
 # --- AI Workout Plan Generation ---
 with open ("workout_coach_prompt.txt", "r") as f:
     WORKOUT_COACH_SYSTEM_PROMPT = f.read()
+
+def generate_line_chart(all_chart_data, value_key, ylabel, title):
+    plt.switch_backend("Agg")  # Headless mode for Flask servers
+    fig, ax = plt.subplots(figsize=(8, 5))
+    fig.patch.set_alpha(0.0)
+    ax.patch.set_alpha(0.0)
+
+    # Plot each user's data
+    for username, data in all_chart_data.items():
+        x = data["dates"]
+        y = data[value_key]
+        ax.plot(x, y, marker='o', label=username)  # Line with nodes
+
+    ax.set_title(title)
+    ax.set_xlabel("Date")
+    ax.set_ylabel(ylabel)
+    ax.legend()
+    ax.grid(True)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+
+    # Save to memory buffer as PNG
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format="png", transparent=True)
+    plt.close(fig)
+    buffer.seek(0)
+
+    # Encode to base64
+    img_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    return f"data:image/png;base64,{img_base64}"
+
 
 def generate_weekly_workout_plan_ai(user_id: int):
     # Gather user profile
@@ -240,21 +266,7 @@ def generate_new_workout_plan():
         app.logger.error(f"AI workout plan error: {e}")
         flash("Failed to generate AI workout plan. Please try again.", "danger")
     return redirect(url_for("workout_plan"))
-    # ensure_column_exists("user_preferences", "gender", "TEXT DEFAULT ''")
-    # ensure_column_exists("user_preferences", "age", "INTEGER")
-    # ensure_column_exists("user_preferences", "activity_level", "TEXT DEFAULT ''")
-    # ensure_column_exists("user_preferences", "previous_history", "TEXT DEFAULT ''")
-    # """Ensure a column exists in a table, add it if it doesn't"""
-    # try:
-    #     # Check if column exists
-    #     columns = db.execute(f"PRAGMA table_info({table_name})")
-    #     column_names = [col["name"] for col in columns]
 
-    #     if column_name not in column_names:
-    #         db.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_definition}")
-    #         app.logger.info(f"Added column {column_name} to table {table_name}")
-    # except Exception as e:
-    #     app.logger.error(f"Error ensuring column {column_name} in {table_name}: {str(e)}")
 # Helper Functions
 def calculate_bmi(weight, height):
     height_m = height / 100
@@ -675,17 +687,18 @@ def send_message():
     except Exception as e:
         app.logger.error(f"Error processing message: {str(e)}")
         return jsonify({"error": "Failed to process message"}), 500
-@app.route("/forgot_password", methods=["GET", "POST"])
-def forgot_password():
-    if request.method == "POST":
-        email = request.form.get("email")
-        user = db.execute("SELECT * FROM users WHERE username = ?", email)
-        if user:
-            flash("Password reset link sent to your email.", "success")
-        else:
-            flash("No account found with that email.", "danger")
-        return redirect(url_for("login"))
-    return render_template("forgot_password.html")
+# TODO: Check if the below commented code can be deleted
+# @app.route("/forgot_password", methods=["GET", "POST"])
+# def forgot_password():
+#     if request.method == "POST":
+#         email = request.form.get("email")
+#         user = db.execute("SELECT * FROM users WHERE username = ?", email)
+#         if user:
+#             flash("Password reset link sent to your email.", "success")
+#         else:
+#             flash("No account found with that email.", "danger")
+#         return redirect(url_for("login"))
+#     return render_template("forgot_password.html")
 @app.route("/generate_new_plan", methods=["POST"])
 @login_required
 def generate_new_plan():
@@ -948,11 +961,171 @@ def toggle_meal_item():
     except Exception as e:
         app.logger.error(f"Error toggling meal item: {str(e)}")
         return jsonify({"success": False, "error": "Internal server error"})
-@app.route("/progress")
+
+
+# Send a friend request
+@app.route("/send_friend_request", methods=["POST"])
+@login_required
+def send_friend_request():
+    data = request.get_json() or request.form
+    friend_username = data.get("friend_username")
+    user_id = session["user_id"]
+
+    if not friend_username:
+        return jsonify({"success": False, "error": "Missing friend's username"}), 400
+
+    # Get friend's user ID
+    friend = db.execute("SELECT id FROM users WHERE username = ?", friend_username)
+    if not friend:
+        return jsonify({"success": False, "error": "User not found"}), 404
+
+    friend_id = friend[0]["id"]
+    if friend_id == user_id:
+        return jsonify({"success": False, "error": "Cannot send friend request to yourself"}), 400
+
+    # Check if request already exists
+    existing = db.execute(
+        "SELECT status FROM user_connections WHERE user_id = ? AND friend_id = ?",
+        user_id, friend_id
+    )
+
+    if existing:
+        status = existing[0]["status"]
+        if status == "pending":
+            return jsonify({"success": False, "error": "Friend request already sent"}), 400
+        elif status == "accepted":
+            return jsonify({"success": False, "error": "Already friends"}), 400
+        elif status == "rejected":
+            # Allow sending new request if previously rejected
+            db.execute(
+                "UPDATE user_connections SET status = 'pending', updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND friend_id = ?",
+                user_id, friend_id
+            )
+    else:
+        # Create new friend request
+        db.execute(
+            "INSERT INTO user_connections (user_id, friend_id, status) VALUES (?, ?, 'pending')",
+            user_id, friend_id
+        )
+    return jsonify({"success": True, "message": "Friend request sent successfully"})
+
+@app.route("/friend_requests", methods=["GET"])
+@login_required
+def get_friend_requests():
+    user_id = session["user_id"]
+    pending_requests = db.execute("""
+        SELECT u.username, uc.user_id, uc.created_at
+        FROM user_connections uc
+        JOIN users u ON uc.user_id = u.id
+        WHERE uc.friend_id = ? AND uc.status = 'pending'
+        ORDER BY uc.created_at DESC
+    """, user_id)
+    return jsonify({"requests": pending_requests})
+
+@app.route("/handle_friend_request", methods=["POST"])
+@login_required
+def handle_friend_request():
+    data = request.get_json() or request.form
+    sender_id = data.get("sender_id")
+    action = data.get("action")  # 'accept' or 'reject'
+    user_id = session["user_id"]
+
+    if not sender_id or not action or action not in ['accept', 'reject']:
+        return jsonify({"success": False, "error": "Invalid request parameters"}), 400
+
+    # Verify request exists and is pending
+    request_exists = db.execute("""
+        SELECT 1 FROM user_connections
+        WHERE user_id = ? AND friend_id = ? AND status = 'pending'
+    """, sender_id, user_id)
+
+    if not request_exists:
+        return jsonify({"success": False, "error": "Friend request not found"}), 404
+
+    new_status = 'accepted' if action == 'accept' else 'rejected'
+
+    db.execute("""
+        UPDATE user_connections
+        SET status = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = ? AND friend_id = ?
+    """, new_status, sender_id, user_id)
+
+    return jsonify({
+        "success": True,
+        "message": f"Friend request {action}ed successfully"
+    })
+
+#TODO: test this function
+
+# Progress page: show user's and all accepted friends' progress charts
+@app.route("/progress", methods=["GET"])
 @login_required
 def progress():
-    chart_data = get_bmi_chart_data(session["user_id"])
-    return render_template("progress.html", chart_data=chart_data)
+    user_id = session["user_id"]
+
+    # Get main user data and username
+    user_chart_data = get_bmi_chart_data(user_id)
+    user_username = db.execute("SELECT username FROM users WHERE id = ?", user_id)[0]["username"]
+
+    # Initialize combined chart data with user's data
+    all_chart_data = {
+        user_username: user_chart_data
+    }
+
+    # Get accepted friends list
+    friend_ids = db.execute("""
+        SELECT u.id, u.username
+        FROM user_connections uc
+        JOIN users u ON uc.friend_id = u.id
+        WHERE uc.user_id = ? AND uc.status = 'accepted'
+        UNION
+        SELECT u.id, u.username
+        FROM user_connections uc
+        JOIN users u ON uc.user_id = u.id
+        WHERE uc.friend_id = ? AND uc.status = 'accepted'
+    """, user_id, user_id)
+
+    # Get all friends' chart data
+    friends = []
+    for friend in friend_ids:
+        friend_id = friend["id"]
+        friend_username = friend["username"]
+        friends.append({"id": friend_id, "username": friend_username})
+        friend_data = get_bmi_chart_data(friend_id)
+        all_chart_data[friend_username] = friend_data
+
+    # Normalize data to the same length
+    max_len = 0
+    for data in all_chart_data.values():
+        if len(data["dates"]) > max_len:
+            max_len = len(data["dates"])
+
+    for username, data in all_chart_data.items():
+        current_len = len(data["dates"])
+        if current_len < max_len:
+            if current_len > 0:
+                last_date = datetime.strptime(data["dates"][-1], '%m/%d')
+                last_bmi = data["bmi_values"][-1]
+                last_weight = data["weights"][-1]
+                last_height = data["heights"][-1]
+            else:
+                # If user has no data, use default values
+                last_date = datetime.now()
+                last_bmi = 0
+                last_weight = 0
+                last_height = 0
+
+            for i in range(max_len - current_len):
+                new_date = last_date + timedelta(days=i+1)
+                data["dates"].append(new_date.strftime('%m/%d'))
+                data["bmi_values"].append(last_bmi)
+                data["weights"].append(last_weight)
+                data["heights"].append(last_height)
+
+    return render_template("progress.html",
+                           all_chart_data=all_chart_data,
+                           user_username=user_username,
+                           friends=friends)
 @app.route("/check_ollama")
 @login_required
 def check_ollama():
@@ -1017,8 +1190,7 @@ def internal_server_error(e):
 with app.app_context():
     init_db()
     # Ensure the updated_at column exists for existing databases
-    ensure_column_exists("user_preferences", "updated_at", "DATETIME DEFAULT CURRENT_TIMESTAMP")
-    ensure_user_preferences_columns()
+    #
 if __name__ == "__main__":
     init_db()
 
@@ -1028,4 +1200,4 @@ if __name__ == "__main__":
         app.logger.error(f"Ollama service issue: {message}")
         print(f"WARNING: {message}")
 
-    app.run(host="127.0.0.1",debug=True, port=5501)
+    app.run(host="0.0.0.0",debug=True, port=5501)
