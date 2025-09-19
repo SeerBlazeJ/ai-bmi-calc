@@ -13,6 +13,21 @@
                 <p>Customize your nutrition journey</p>
             </div>
         </div>
+        <!-- Navigation Buttons -->
+        <div class="navigation-buttons">
+            <a href="/calculator" class="nav-btn">
+                <i class="fas fa-calculator"> </i>
+                <span style="text-decoration: none;">BMI Calc</span>
+            </a>
+            <a href="/workout_plan" class="nav-btn">
+                <i class="fas fa-dumbbell"></i>
+                <span>Workout Plan</span>
+            </a>
+            <a href="/meal_plan" class="nav-btn">
+                <i class="fas fa-utensils"></i>
+                <span>Meal Plan</span>
+            </a>
+        </div>
 
         <!-- Main Form -->
         <form method="post" class="preferences-form" id="preferencesForm">
@@ -258,12 +273,13 @@
                         <div class="input-wrapper mt-3">
                             <input type="text" name="prefered_cuisine" id="prefered_cuisine"
                                 value="{% if preferences and preferences.preferred_cuisines %}{{ preferences.preferred_cuisines }}{% endif %}"
-                                placeholder="e.g., Indian, , Mexican, etc." class="fancy-input" maxlength="200">
+                                placeholder="Additional preferences (if any)" class="fancy-input" maxlength="200">
                             <div class="input-icon">
                                 <i class="fas fa-globe"></i>
                             </div>
                         </div>
-                        <p class="input-help">Separate multiple cuisines with commas</p>
+                        <p class="input-help">Additional preferences may include any extra modifications that you
+                            want...</p>
                     </div>
                 </div>
             </div>
@@ -469,6 +485,10 @@
     .preferences-wrapper {
         max-width: 1200px;
         margin: 0 auto;
+    }
+
+    #prefered_cuisine::placeholder {
+        font-size: 12px;
     }
 
     /* Header Section */
