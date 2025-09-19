@@ -22,9 +22,6 @@ import subprocess
 import time
 from urllib.parse import urlparse
 import traceback
-import matplotlib.pyplot as plt
-import io
-import base64
 
 # Ensure login_required is defined before any route uses it
 def login_required(f):
@@ -44,7 +41,7 @@ app.config["SECRET_KEY"] = "qwertyuiopasdfghjklzxcvbnm"  # In production, use a 
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-with open("diet_coach_prompt.txt", "r") as f:
+with open ("diet_coach_prompt.txt", "r") as f:
     DIET_COACH_SYSTEM_PROMPT = f.read()
 # Initialize CS50 SQL database
 db = SQL("sqlite:///health.db")
@@ -150,37 +147,6 @@ def init_db():
 # --- AI Workout Plan Generation ---
 with open ("workout_coach_prompt.txt", "r") as f:
     WORKOUT_COACH_SYSTEM_PROMPT = f.read()
-
-def generate_line_chart(all_chart_data, value_key, ylabel, title):
-    plt.switch_backend("Agg")  # Headless mode for Flask servers
-    fig, ax = plt.subplots(figsize=(8, 5))
-    fig.patch.set_alpha(0.0)
-    ax.patch.set_alpha(0.0)
-
-    # Plot each user's data
-    for username, data in all_chart_data.items():
-        x = data["dates"]
-        y = data[value_key]
-        ax.plot(x, y, marker='o', label=username)  # Line with nodes
-
-    ax.set_title(title)
-    ax.set_xlabel("Date")
-    ax.set_ylabel(ylabel)
-    ax.legend()
-    ax.grid(True)
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-
-    # Save to memory buffer as PNG
-    buffer = io.BytesIO()
-    plt.savefig(buffer, format="png", transparent=True)
-    plt.close(fig)
-    buffer.seek(0)
-
-    # Encode to base64
-    img_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
-    return f"data:image/png;base64,{img_base64}"
-
 
 def generate_weekly_workout_plan_ai(user_id: int):
     # Gather user profile
@@ -326,15 +292,6 @@ def check_ollama_service():
     # Ollama service is no longer used for AI responses
     return True, "AI service is now handled by OpenRouter via ai_caller.py."
 def generate_chat_response(user_message, user_id):
-    # try:
-    #     # Use OpenRouter via ai_caller.py for chat responses
-    #     pass  # Implementation to be updated below
-    #         # Test connection to Ollama
-    #     # ollama_client.list()
-    #     app.logger.info("Successfully connected to Ollama")
-    # except Exception as ollama_error:
-    #     app.logger.error(f"Failed to connect to Ollama: {str(ollama_error)}")
-    #    return "I'm having trouble connecting to my AI service right now. Please make sure Ollama is running and try again."
     try:
         # Get latest BMI record
         bmi = db.execute("""
@@ -687,18 +644,7 @@ def send_message():
     except Exception as e:
         app.logger.error(f"Error processing message: {str(e)}")
         return jsonify({"error": "Failed to process message"}), 500
-# TODO: Check if the below commented code can be deleted
-# @app.route("/forgot_password", methods=["GET", "POST"])
-# def forgot_password():
-#     if request.method == "POST":
-#         email = request.form.get("email")
-#         user = db.execute("SELECT * FROM users WHERE username = ?", email)
-#         if user:
-#             flash("Password reset link sent to your email.", "success")
-#         else:
-#             flash("No account found with that email.", "danger")
-#         return redirect(url_for("login"))
-#     return render_template("forgot_password.html")
+
 @app.route("/generate_new_plan", methods=["POST"])
 @login_required
 def generate_new_plan():
