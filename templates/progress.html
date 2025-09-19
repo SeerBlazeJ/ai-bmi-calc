@@ -24,7 +24,7 @@
         <div class="col-md-6">
             <form id="addFriendForm" class="d-flex align-items-center mb-2">
                 <input type="text" id="friendUsername" class="form-control me-2" placeholder="Friend's username">
-                <button type="submit" class="btn btn-primary">Send Friend Request</button>
+                <button type="submit" class="btn btn-primary" style="width: 111px; height: 55px; margin-left: 22px;">Send</button>
             </form>
         </div>
     </div>
@@ -170,6 +170,9 @@
             }
         });
 
+        // Get theme mode for chart styling
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        
         // Chart configuration
         const chartOptions = {
             responsive: true,
@@ -177,35 +180,93 @@
             plugins: {
                 legend: {
                     display: true,
-                    position: 'top'
+                    position: 'top',
+                    labels: {
+                        color: isDarkMode ? '#f8fafc' : '#32325d',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    titleColor: 'white',
-                    bodyColor: 'white',
-                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.9)' : 'rgba(0, 0, 0, 0.8)',
+                    titleColor: isDarkMode ? '#f8fafc' : 'white',
+                    bodyColor: isDarkMode ? '#e2e8f0' : 'white',
+                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)',
                     borderWidth: 1,
                     cornerRadius: 8,
-                    displayColors: true
+                    displayColors: true,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    padding: 12
                 }
             },
             scales: {
                 y: {
                     beginAtZero: false,
                     grid: {
-                        color: 'rgba(0, 0, 0, 0.1)'
+                        color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : '#A4A4A4',
+                        drawBorder: false
                     },
                     ticks: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                        color: isDarkMode ? '#cbd5e1' : '#4a5568',
+                        font: {
+                            size: 12,
+                            weight: '500'
+                        },
+                        padding: 10
+                    },
+                    title: {
+                        display: true,
+                        text: 'BMI Value',
+                        color: isDarkMode ? '#f8fafc' : '#32325d',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        padding: {top: 10, bottom: 10}
                     }
                 },
                 x: {
                     grid: {
-                        color: 'rgba(0, 0, 0, 0.1)'
+                        color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : '#E5E5E5',
+                        drawBorder: false
                     },
                     ticks: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                        color: isDarkMode ? '#cbd5e1' : '#4a5568',
+                        font: {
+                            size: 12,
+                            weight: '500'
+                        },
+                        padding: 10,
+                        maxRotation: 45,
+                        minRotation: 45
                     }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            elements: {
+                point: {
+                    radius: 4,
+                    hoverRadius: 6,
+                    borderWidth: 2,
+                    hoverBorderWidth: 3
+                },
+                line: {
+                    borderWidth: 3,
+                    tension: 0.4
                 }
             }
         };
@@ -225,7 +286,7 @@
                     fill: false,
                     tension: 0.4,
                     pointBackgroundColor: colors[username],
-                    pointBorderColor: '#ffffff',
+                    pointBorderColor: isDarkMode ? '#0f172a' : '#ffffff',
                     pointBorderWidth: 2,
                     pointRadius: 4,
                     pointHoverRadius: 6
@@ -238,9 +299,8 @@
                     y: {
                         ...chartOptions.scales.y,
                         title: {
-                            display: true,
-                            text: 'BMI Value',
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                            ...chartOptions.scales.y.title,
+                            text: 'BMI Value'
                         }
                     }
                 }
@@ -262,7 +322,7 @@
                     fill: false,
                     tension: 0.4,
                     pointBackgroundColor: colors[username],
-                    pointBorderColor: '#ffffff',
+                    pointBorderColor: isDarkMode ? '#0f172a' : '#ffffff',
                     pointBorderWidth: 2,
                     pointRadius: 4,
                     pointHoverRadius: 6
@@ -275,9 +335,8 @@
                     y: {
                         ...chartOptions.scales.y,
                         title: {
-                            display: true,
-                            text: 'Weight (kg)',
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                            ...chartOptions.scales.y.title,
+                            text: 'Weight (kg)'
                         }
                     }
                 }
@@ -410,6 +469,9 @@
                 colors[username] = `hsl(${hue}, 70%, 60%)`;
             }
         }); if (chartData.dates.length > 0) {
+            // Get theme mode for chart styling
+            const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+            
             // Chart configuration
             const chartOptions = {
                 responsive: true,
@@ -419,32 +481,76 @@
                         display: false
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: 'white',
-                        bodyColor: 'white',
-                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.9)' : 'rgba(0, 0, 0, 0.8)',
+                        titleColor: isDarkMode ? '#f8fafc' : 'white',
+                        bodyColor: isDarkMode ? '#e2e8f0' : 'white',
+                        borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)',
                         borderWidth: 1,
                         cornerRadius: 8,
-                        displayColors: false
+                        displayColors: false,
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        padding: 12
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: false,
                         grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
+                            color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                            drawBorder: false
                         },
                         ticks: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                            color: isDarkMode ? '#cbd5e1' : '#4a5568',
+                            font: {
+                                size: 12,
+                                weight: '500'
+                            },
+                            padding: 10
+                        },
+                        title: {
+                            display: true,
+                            text: 'BMI Value',
+                            color: isDarkMode ? '#f8fafc' : '#32325d',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            padding: {top: 10, bottom: 10}
                         }
                     },
                     x: {
                         grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
+                            color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                            drawBorder: false
                         },
                         ticks: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                            color: isDarkMode ? '#cbd5e1' : '#4a5568',
+                            font: {
+                                size: 12,
+                                weight: '500'
+                            },
+                            padding: 10,
+                            maxRotation: 45,
+                            minRotation: 45
                         }
+                    }
+                },
+                elements: {
+                    point: {
+                        radius: 6,
+                        hoverRadius: 8,
+                        borderWidth: 2,
+                        hoverBorderWidth: 3
+                    },
+                    line: {
+                        borderWidth: 3,
+                        tension: 0.4
                     }
                 }
             };
@@ -464,7 +570,7 @@
                         fill: true,
                         tension: 0.4,
                         pointBackgroundColor: '#667eea',
-                        pointBorderColor: '#ffffff',
+                        pointBorderColor: isDarkMode ? '#0f172a' : '#ffffff',
                         pointBorderWidth: 2,
                         pointRadius: 6,
                         pointHoverRadius: 8
@@ -477,9 +583,8 @@
                         y: {
                             ...chartOptions.scales.y,
                             title: {
-                                display: true,
-                                text: 'BMI Value',
-                                color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                                ...chartOptions.scales.y.title,
+                                text: 'BMI Value'
                             }
                         }
                     }
@@ -501,7 +606,7 @@
                         fill: true,
                         tension: 0.4,
                         pointBackgroundColor: '#f093fb',
-                        pointBorderColor: '#ffffff',
+                        pointBorderColor: isDarkMode ? '#0f172a' : '#ffffff',
                         pointBorderWidth: 2,
                         pointRadius: 6,
                         pointHoverRadius: 8
@@ -514,9 +619,8 @@
                         y: {
                             ...chartOptions.scales.y,
                             title: {
-                                display: true,
-                                text: 'Weight (kg)',
-                                color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                                ...chartOptions.scales.y.title,
+                                text: 'Weight (kg)'
                             }
                         }
                     }
