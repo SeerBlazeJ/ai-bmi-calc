@@ -1,0 +1,1107 @@
+{% extends "base.html" %}
+{% block header %}Health Preferences{% endblock %}
+{% block content %}
+<div class="preferences-container">
+    <div class="preferences-wrapper">
+        <!-- Header Section -->
+        <div class="preferences-header">
+            <div class="header-icon">
+                <i class="fas fa-cog"></i>
+            </div>
+            <div class="header-content">
+                <h1>Health Preferences</h1>
+                <p>Customize your nutrition journey</p>
+            </div>
+        </div>
+
+        <!-- Main Form -->
+        <form method="post" class="preferences-form" id="preferencesForm">
+            <div class="form-grid">
+                <!-- Gender Card -->
+                <div class="preference-card gender-card">
+                    <div class="card-icon">
+                        <i class="fas fa-venus-mars"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Gender (Optional)</h3>
+                        <div class="custom-select-wrapper">
+                            <select name="gender" id="gender" class="custom-select">
+                                <option value="" {% if not preferences or not preferences.gender %}selected{% endif %}>
+                                    Prefer not to say</option>
+                                <option value="male" {% if preferences and preferences.gender=='male' %}selected{% endif
+                                    %}>Male</option>
+                                <option value="female" {% if preferences and preferences.gender=='female' %}selected{%
+                                    endif %}>Female</option>
+                                <option value="other" {% if preferences and preferences.gender=='other' %}selected{%
+                                    endif %}>Other</option>
+                            </select>
+                            <div class="select-arrow">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Age Card -->
+                <div class="preference-card age-card">
+                    <div class="card-icon">
+                        <i class="fas fa-birthday-cake"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Age (Optional)</h3>
+                        <div class="input-wrapper">
+                            <input type="number" name="age" id="age" min="0" max="120" class="fancy-input"
+                                placeholder="Enter your age"
+                                value="{% if preferences and preferences.age %}{{ preferences.age }}{% endif %}">
+                            <div class="input-icon">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Level Card -->
+                <div class="preference-card activity-card">
+                    <div class="card-icon">
+                        <i class="fas fa-running"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Activity Level (Optional)</h3>
+                        <div class="custom-select-wrapper">
+                            <select name="activity_level" id="activity_level" class="custom-select">
+                                <option value="" {% if not preferences or not preferences.activity_level %}selected{%
+                                    endif %}>Not specified</option>
+                                <option value="sedentary" {% if preferences and preferences.activity_level=='sedentary'
+                                    %}selected{% endif %}>Sedentary (little or no exercise)</option>
+                                <option value="light" {% if preferences and preferences.activity_level=='light'
+                                    %}selected{% endif %}>Light (1-3 days/week)</option>
+                                <option value="moderate" {% if preferences and preferences.activity_level=='moderate'
+                                    %}selected{% endif %}>Moderate (3-5 days/week)</option>
+                                <option value="active" {% if preferences and preferences.activity_level=='active'
+                                    %}selected{% endif %}>Active (6-7 days/week)</option>
+                                <option value="very_active" {% if preferences and
+                                    preferences.activity_level=='very_active' %}selected{% endif %}>Very Active (hard
+                                    exercise & physical job)</option>
+                            </select>
+                            <div class="select-arrow">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Previous History Card -->
+                <div class="preference-card history-card">
+                    <div class="card-icon">
+                        <i class="fas fa-notes-medical"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Previous Health History (Optional)</h3>
+                        <textarea name="previous_history" id="previous_history" class="fancy-input" rows="2"
+                            placeholder="e.g., diabetes, hypertension, injuries, etc.">{% if preferences and preferences.previous_history %}{{ preferences.previous_history }}{% endif %}</textarea>
+                    </div>
+                </div>
+
+                <!-- Dietary Preferences Card -->
+                <div class="preference-card dietary-card">
+                    <div class="card-icon">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Dietary Preferences</h3>
+                        <div class="custom-select-wrapper">
+                            <select name="dietary_preferences" id="dietary_preferences" class="custom-select">
+                                <option value="">No preference</option>
+                                <option value="vegetarian" {% if preferences and
+                                    preferences.dietary_preferences=='vegetarian' %}selected{% endif %}>
+                                    Vegetarian
+                                </option>
+                                <option value="vegan" {% if preferences and preferences.dietary_preferences=='vegan'
+                                    %}selected{% endif %}>
+                                    Vegan
+                                </option>
+                                <option value="keto" {% if preferences and preferences.dietary_preferences=='keto'
+                                    %}selected{% endif %}>
+                                    Keto
+                                </option>
+                                <option value="mediterranean" {% if preferences and
+                                    preferences.dietary_preferences=='mediterranean' %}selected{% endif %}>
+                                    Mediterranean
+                                </option>
+                                <option value="paleo" {% if preferences and preferences.dietary_preferences=='paleo'
+                                    %}selected{% endif %}>
+                                    Paleo
+                                </option>
+                                <option value="low_carb" {% if preferences and
+                                    preferences.dietary_preferences=='low_carb' %}selected{% endif %}>
+                                    Low Carb
+                                </option>
+                                <option value="gluten_free" {% if preferences and
+                                    preferences.dietary_preferences=='gluten_free' %}selected{% endif %}>
+                                    Gluten Free
+                                </option>
+                            </select>
+                            <div class="select-arrow">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Allergies Card -->
+                <div class="preference-card allergies-card">
+                    <div class="card-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Food Allergies</h3>
+                        <div class="input-wrapper">
+                            <input type="text" name="allergies" id="allergies"
+                                value="{% if preferences %}{{ preferences.allergies }}{% endif %}"
+                                placeholder="e.g., nuts, dairy, gluten, shellfish" class="fancy-input" maxlength="200">
+                            <div class="input-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                        </div>
+                        <p class="input-help">Separate multiple allergies with commas</p>
+                    </div>
+                </div>
+
+                <!-- Health Goals Card -->
+                <div class="preference-card goals-card">
+                    <div class="card-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Health Goals</h3>
+                        <div class="goal-options">
+                            <label class="goal-option">
+                                <input type="radio" name="goals" value="maintenance" {% if not preferences or
+                                    preferences.goals=='maintenance' %}checked{% endif %}>
+                                <div class="goal-option-content">
+                                    <i class="fas fa-balance-scale"></i>
+                                    <span>Maintain Weight</span>
+                                </div>
+                            </label>
+
+                            <label class="goal-option">
+                                <input type="radio" name="goals" value="weight_loss" {% if preferences and
+                                    preferences.goals=='weight_loss' %}checked{% endif %}>
+                                <div class="goal-option-content">
+                                    <i class="fas fa-weight"></i>
+                                    <span>Weight Loss</span>
+                                </div>
+                            </label>
+
+                            <label class="goal-option">
+                                <input type="radio" name="goals" value="weight_gain" {% if preferences and
+                                    preferences.goals=='weight_gain' %}checked{% endif %}>
+                                <div class="goal-option-content">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>Weight Gain</span>
+                                </div>
+                            </label>
+
+                            <label class="goal-option">
+                                <input type="radio" name="goals" value="muscle_gain" {% if preferences and
+                                    preferences.goals=='muscle_gain' %}checked{% endif %}>
+                                <div class="goal-option-content">
+                                    <i class="fas fa-dumbbell"></i>
+                                    <span>Muscle Gain</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Target Weight Card -->
+                <div class="preference-card weight-card">
+                    <div class="card-icon">
+                        <i class="fas fa-crosshairs"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Target Weight (Optional)</h3>
+                        <div class="weight-input-wrapper">
+                            <input type="number" step="0.1" min="20" max="300" name="target_weight" id="target_weight"
+                                value="{% if preferences and preferences.target_weight %}{{ preferences.target_weight }}{% endif %}"
+                                placeholder="Enter target weight" class="weight-input">
+                            <span class="weight-unit">kg</span>
+                        </div>
+                        <p class="input-help">Helps personalize your meal plan and calorie targets</p>
+                    </div>
+                </div>
+
+                <!-- Additional Preferences Card -->
+                <div class="preference-card additional-card">
+                    <div class="card-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Additional Preferences</h3>
+                        <div class="custom-select-wrapper">
+                            <select name="meal_frequency" id="meal_frequency" class="custom-select">
+                                <option value="">Standard (3 meals/day)</option>
+                                <option value="small_frequent" {% if preferences and
+                                    preferences.meal_frequency=='small_frequent' %}selected{% endif %}>Small & Frequent
+                                    (5-6 meals/day)</option>
+                                <option value="intermittent" {% if preferences and
+                                    preferences.meal_frequency=='intermittent' %}selected{% endif %}>Intermittent
+                                    Fasting</option>
+                                <option value="large_meals" {% if preferences and
+                                    preferences.meal_frequency=='large_meals' %}selected{% endif %}>Large Meals (2
+                                    meals/day)</option>
+                            </select>
+                            <div class="select-arrow">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                        <div class="input-wrapper mt-3">
+                            <input type="text" name="prefered_cuisine" id="prefered_cuisine"
+                                value="{% if preferences and preferences.preferred_cuisines %}{{ preferences.preferred_cuisines }}{% endif %}"
+                                placeholder="e.g., Indian, , Mexican, etc." class="fancy-input" maxlength="200">
+                            <div class="input-icon">
+                                <i class="fas fa-globe"></i>
+                            </div>
+                        </div>
+                        <p class="input-help">Separate multiple cuisines with commas</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-save"></i>
+                    <span>Save Preferences</span>
+                </button>
+                <a href="{{ url_for('dashboard') }}" class="btn-secondary">
+                    <i class="fas fa-times"></i>
+                    <span>Cancel</span>
+                </a>
+            </div>
+        </form>
+
+        <!-- Current Preferences Display -->
+        {% if preferences %}
+        <div class="current-preferences">
+            <h2><i class="fas fa-clipboard-check"></i> Current Preferences</h2>
+            <div class="preferences-summary">
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="fas fa-venus-mars"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h4>Gender</h4>
+                        <p>{% if preferences.gender %}{{ preferences.gender|capitalize }}{% else %}Not specified{% endif
+                            %}</p>
+                    </div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="fas fa-birthday-cake"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h4>Age</h4>
+                        <p>{% if preferences.age %}{{ preferences.age }}{% else %}Not specified{% endif %}</p>
+                    </div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="fas fa-running"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h4>Activity Level</h4>
+                        <p>{% if preferences.activity_level %}{{ preferences.activity_level.replace('_', '
+                            ').capitalize() }}{% else %}Not specified{% endif %}</p>
+                    </div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="fas fa-notes-medical"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h4>History</h4>
+                        <p>{% if preferences.previous_history %}{{ preferences.previous_history }}{% else %}None
+                            specified{% endif %}</p>
+                    </div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h4>Dietary</h4>
+                        <p>{{ preferences.dietary_preferences.replace('_', ' ').title() if
+                            preferences.dietary_preferences else 'No preference' }}</p>
+                    </div>
+                </div>
+
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="fas fa-shield-virus"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h4>Allergies</h4>
+                        <p>{{ preferences.allergies if preferences.allergies else 'None specified' }}</p>
+                    </div>
+                </div>
+
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="fas fa-flag"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h4>Goal</h4>
+                        <p>{{ preferences.goals.replace('_', ' ').title() if preferences.goals else 'Maintenance' }}</p>
+                    </div>
+                </div>
+
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h4>Target Weight</h4>
+                        <p>{{ preferences.target_weight if preferences.target_weight else 'Not set' }}{% if
+                            preferences.target_weight %} kg{% endif %}</p>
+                    </div>
+                </div>
+
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h4>Meal Frequency</h4>
+                        <p>
+                            {% if preferences.meal_frequency == 'small_frequent' %}
+                            Small & Frequent (5-6 meals/day)
+                            {% elif preferences.meal_frequency == 'intermittent' %}
+                            Intermittent Fasting
+                            {% elif preferences.meal_frequency == 'large_meals' %}
+                            Large Meals (2 meals/day)
+                            {% else %}
+                            Standard (3 meals/day)
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div class="summary-content">
+                        <div class="summary-content">
+                            <h4>Preferred Cuisines</h4>
+                            <p>{{ preferences.prefered_cuisine if preferences.prefered_cuisine else 'No preference' }}
+                            </p>
+                        </div>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Back Button -->
+    <div class="back-section">
+        <a href="{{ url_for('dashboard') }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Dashboard</span>
+        </a>
+    </div>
+</div>
+<style>
+    /* Enhanced CSS Variables */
+    :root {
+        --primary-color: #5e72e4;
+        --secondary-color: #11cdef;
+        --success-color: #2dce89;
+        --warning-color: #fb6340;
+        --danger-color: #f5365c;
+        --text-primary: #32325d;
+        --text-secondary: #525f7f;
+        --text-tertiary: #8898aa;
+        --bg-primary: #f8f9fe;
+        --bg-secondary: #ffffff;
+        --bg-tertiary: #f1f3f6;
+        --bg-quaternary: #e9ecef;
+        --card-bg: #ffffff;
+        --border-color: #e3e3e3;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+        --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+        --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.15);
+        --shadow-button: 0 4px 14px rgba(94, 114, 228, 0.3);
+        --shadow-button-hover: 0 6px 20px rgba(94, 114, 228, 0.4);
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+        --ease-out: cubic-bezier(0, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] {
+        --text-primary: #ffffff;
+        --text-secondary: #c1c9d2;
+        --text-tertiary: #8b92a9;
+        --bg-primary: #0b0e17;
+        --bg-secondary: #151823;
+        --bg-tertiary: #1f2332;
+        --bg-quaternary: #2a2e3f;
+        --card-bg: #151823;
+        --border-color: #2a2e3f;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+        --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.3);
+        --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Modern Preferences Page Design */
+    .preferences-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        padding: 2rem 1rem;
+    }
+
+    .preferences-wrapper {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* Header Section */
+    .preferences-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+        margin-bottom: 3rem;
+        text-align: center;
+    }
+
+    .header-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--primary-gradient);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        box-shadow: var(--shadow-lg);
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    .header-content h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0 0 0.5rem;
+    }
+
+    .header-content p {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    /* Form Grid */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    /* Preference Cards */
+    .preference-card {
+        background: var(--card-bg);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: var(--shadow-xl);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s var(--ease-smooth);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .preference-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-gradient);
+        transform: scaleX(0);
+        transition: transform 0.3s var(--ease-out);
+    }
+
+    .preference-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .preference-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-2xl);
+    }
+
+    .card-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--bg-secondary);
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+        transition: all 0.3s var(--ease-smooth);
+    }
+
+    .preference-card:hover .card-icon {
+        background: var(--primary-gradient);
+        color: white;
+        transform: scale(1.1);
+    }
+
+    .card-content h3 {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 1.5rem;
+    }
+
+    /* Custom Select */
+    .custom-select-wrapper {
+        position: relative;
+    }
+
+    .custom-select {
+        width: 100%;
+        padding: 1rem 3rem 1rem 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        appearance: none;
+        transition: all 0.3s var(--ease-smooth);
+    }
+
+    .custom-select:hover {
+        border-color: var(--primary-color);
+    }
+
+    .custom-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(94, 114, 228, 0.2);
+    }
+
+    .select-arrow {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        pointer-events: none;
+        transition: all 0.3s var(--ease-smooth);
+    }
+
+    .custom-select:hover+.select-arrow {
+        color: var(--primary-color);
+    }
+
+    /* Fancy Input */
+    .input-wrapper {
+        position: relative;
+    }
+
+    .fancy-input {
+        width: 100%;
+        padding: 1rem 1rem 1rem 3rem;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.3s var(--ease-smooth);
+    }
+
+    .fancy-input:hover {
+        border-color: var(--primary-color);
+    }
+
+    .fancy-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(94, 114, 228, 0.2);
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        transition: all 0.3s var(--ease-smooth);
+    }
+
+    .fancy-input:focus+.input-icon {
+        color: var(--primary-color);
+    }
+
+    .input-help {
+        font-size: 0.875rem;
+        color: var(--text-tertiary);
+        margin-top: 0.5rem;
+    }
+
+    /* Goal Options */
+    .goal-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .goal-option {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .goal-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+    }
+
+    .goal-option-content {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        background: var(--bg-secondary);
+        transition: all 0.3s var(--ease-smooth);
+    }
+
+    .goal-option-content i {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        transition: all 0.3s var(--ease-smooth);
+    }
+
+    .goal-option input[type="radio"]:checked+.goal-option-content {
+        border-color: var(--primary-color);
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    .goal-option input[type="radio"]:checked+.goal-option-content i {
+        color: white;
+    }
+
+    .goal-option:hover .goal-option-content {
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+
+    /* Weight Input */
+    .weight-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .weight-input {
+        flex: 1;
+        padding: 1rem 3rem 1rem 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.3s var(--ease-smooth);
+    }
+
+    .weight-input:hover {
+        border-color: var(--primary-color);
+    }
+
+    .weight-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(94, 114, 228, 0.2);
+    }
+
+    .weight-unit {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        font-weight: 600;
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 3rem;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s var(--ease-smooth);
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        color: white;
+        box-shadow: var(--shadow-button);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-button-hover);
+    }
+
+    .btn-secondary {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border: 2px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+        background: var(--bg-tertiary);
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        text-decoration: none;
+        color: var(--text-primary);
+    }
+
+    /* Current Preferences */
+    .current-preferences {
+        background: var(--card-bg);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-top: 3rem;
+        box-shadow: var(--shadow-xl);
+        border: 1px solid var(--border-color);
+    }
+
+    .current-preferences h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .preferences-summary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        /* Exactly 3 columns */
+        gap: 1.5rem;
+    }
+
+    .summary-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        transition: all 0.3s var(--ease-smooth);
+    }
+
+    .summary-item:hover {
+        background: var(--bg-tertiary);
+        transform: translateY(-2px);
+    }
+
+    .summary-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--primary-gradient);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+    }
+
+    .summary-content h4 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin: 0 0 0.25rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .summary-content p {
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    /* Back Button */
+    .back-section {
+        text-align: center;
+        margin-top: 3rem;
+    }
+
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1.5rem;
+        background: transparent;
+        color: var(--text-secondary);
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s var(--ease-smooth);
+    }
+
+    .back-btn:hover {
+        background: var(--bg-secondary);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        transform: translateX(-5px);
+        text-decoration: none;
+    }
+
+    /* Dark Mode Enhancements */
+    [data-theme="dark"] .preference-card,
+    [data-theme="dark"] .current-preferences {
+        background: var(--bg-tertiary);
+        border-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .card-icon,
+    [data-theme="dark"] .summary-item {
+        background: var(--bg-quaternary);
+    }
+
+    [data-theme="dark"] .custom-select,
+    [data-theme="dark"] .fancy-input,
+    [data-theme="dark"] .weight-input {
+        background: var(--bg-quaternary);
+        border-color: var(--border-color);
+        color: #ffffff;
+    }
+
+    [data-theme="dark"] .goal-option-content {
+        background: var(--bg-quaternary);
+        border-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .custom-select option {
+        background: var(--bg-tertiary);
+        color: #ffffff;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 992px) {
+        .preferences-summary {
+            grid-template-columns: repeat(2, 1fr);
+            /* 2 columns on medium screens */
+        }
+    }
+
+    @media (max-width: 768px) {
+        .preferences-header {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .header-icon {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+        }
+
+        .header-content h1 {
+            font-size: 2rem;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .goal-options {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            width: 100%;
+        }
+
+        .preferences-summary {
+            grid-template-columns: 1fr;
+            /* 1 column on small screens */
+        }
+    }
+
+    /* Animations */
+    .preference-card {
+        animation: slideUp 0.6s var(--ease-out) backwards;
+    }
+
+    .preference-card:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+
+    .preference-card:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .preference-card:nth-child(3) {
+        animation-delay: 0.3s;
+    }
+
+    .preference-card:nth-child(4) {
+        animation-delay: 0.4s;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Form Validation Styles */
+    .fancy-input:invalid,
+    .weight-input:invalid,
+    .custom-select:invalid {
+        border-color: var(--danger-color);
+    }
+
+    .fancy-input:valid,
+    .weight-input:valid,
+    .custom-select:valid {
+        border-color: var(--success-color);
+    }
+
+    /* Loading State */
+    .btn-primary:disabled {
+        background: var(--bg-tertiary);
+        color: var(--text-tertiary);
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-primary:disabled:hover {
+        transform: none;
+        box-shadow: var(--shadow-md);
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('preferencesForm');
+        const submitBtn = form.querySelector('.btn-primary');
+
+        // Form validation
+        form.addEventListener('submit', function (e) {
+            const targetWeight = document.getElementById('target_weight').value;
+
+            // Validate target weight if provided
+            if (targetWeight && (parseFloat(targetWeight) <= 0 || parseFloat(targetWeight) > 300)) {
+                e.preventDefault();
+                alert('Please enter a valid target weight between 0.1 and 300 kg');
+                return;
+            }
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Saving...</span>';
+        });
+
+        // Real-time validation for target weight
+        const targetWeightInput = document.getElementById('target_weight');
+        targetWeightInput.addEventListener('input', function () {
+            const value = parseFloat(this.value);
+            if (this.value && (value <= 0 || value > 300)) {
+                this.setCustomValidity('Weight must be between 0.1 and 300 kg');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        // Smooth transitions for radio buttons
+        const radioButtons = document.querySelectorAll('input[type="radio"]');
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', function () {
+                // Remove checked class from all goal options
+                document.querySelectorAll('.goal-option').forEach(option => {
+                    option.classList.remove('checked');
+                });
+
+                // Add checked class to selected option
+                if (this.checked) {
+                    this.closest('.goal-option').classList.add('checked');
+                }
+            });
+        });
+
+        // Initialize checked state
+        const checkedRadio = document.querySelector('input[type="radio"]:checked');
+        if (checkedRadio) {
+            checkedRadio.closest('.goal-option').classList.add('checked');
+        }
+    });
+</script>
+{% endblock %}

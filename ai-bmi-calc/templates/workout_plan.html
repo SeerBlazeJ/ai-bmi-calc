@@ -1,0 +1,455 @@
+{% extends "base.html" %}
+{% block header %}Your Workout Plan{% endblock %}
+{% block content %}
+<div class="meal-plan-container">
+    <div class="meal-plan-wrapper">
+        <!-- Header Section -->
+        <div class="meal-plan-header">
+            <div class="header-icon">
+                <i class="fas fa-dumbbell"></i>
+            </div>
+            <div class="header-content">
+                <h1>Your Weekly Workout Plan</h1>
+                <p>Personalized fitness based on your profile</p>
+            </div>
+        </div>
+        
+        <!-- Navigation Buttons -->
+        <div class="navigation-buttons">
+            <a href="{{ url_for('calculator') }}" class="nav-btn">
+                <i class="fas fa-calculator"></i>
+                <span>BMI Calc</span>
+            </a>
+            <a href="{{ url_for('meal_plan') }}" class="nav-btn">
+                <i class="fas fa-utensils"></i>
+                <span>Meal Plan</span>
+            </a>
+            <a href="{{ url_for('preferences') }}" class="nav-btn">
+                <i class="fas fa-cog"></i>
+                <span>Preferences</span>
+            </a>
+        </div>
+        
+        <!-- Generate New Plan Button -->
+        <div class="generate-plan-section">
+            <form method="post" action="{{ url_for('generate_new_workout_plan') }}">
+                <button type="submit" class="btn-generate" id="generateBtn">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Generate New Plan</span>
+                </button>
+            </form>
+        </div>
+        
+        <!-- Loading Animation -->
+        <div class="loading-container" id="loadingContainer" style="display: none;">
+            <div class="loading-content">
+                <div class="loading-spinner">
+                    <div class="simple-spinner"></div>
+                </div>
+                <div class="loading-text">
+                    <h3>Creating Your Workout Plan...</h3>
+                    <p id="loadingMessage">Analyzing your profile</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Workout Plan Content -->
+        {% if plan_data %}
+        <div class="meal-plan-content">
+            <!-- Plan Summary -->
+            <div class="plan-summary">
+                <div class="summary-card">
+                    <div class="summary-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h3>Focus</h3>
+                        <p>{{ plan_data.focus }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Plan Rules -->
+            <div class="plan-rules">
+                <h3>Plan Guidelines</h3>
+                <ul>
+                    {% for rule in plan_data.rules %}
+                    <li>{{ rule }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            <!-- Weekly Plan - Changed to 3 cards per row -->
+            <div class="weekly-plan">
+                {% for day, details in plan_data.week.items() %}
+                <div class="day-card">
+                    <div class="day-header">
+                        <h3>{{ day }}</h3>
+                        {% if details.rest %}<span class="rest-day-badge">Rest Day</span>{% endif %}
+                    </div>
+                    
+                    <div class="meals">
+                        {% if details.rest %}
+                        <div class="meal-section">
+                            <h4>Rest Day</h4>
+                            <div class="meal-item">
+                                <span>Recovery is essential for muscle growth and injury prevention</span>
+                            </div>
+                        </div>
+                        {% else %}
+                        {% for workout in details.workout %}
+                        <div class="meal-section">
+                            <h4>{{ workout.exercise }}</h4>
+                            <div class="meal-item workout-item" data-plan-id="{{ plan_id }}" data-item-key="{{ day }}_{{ workout.exercise|replace(' ', '_') }}">
+                                <input type="checkbox" class="meal-checkbox" {% if completed_items.get(day + '_' + workout.exercise|replace(' ', '_')) %}checked{% endif %}>
+                                <div class="workout-content">
+                                    <div class="workout-sets-reps">{{ workout.sets }} sets × {{ workout.reps }} reps</div>
+                                    {% if workout.notes %}<div class="workout-notes">{{ workout.notes }}</div>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Equipment Needed -->
+            <div class="shopping-list">
+                <h3>Equipment Needed</h3>
+                <ul>
+                    {% for item in plan_data.equipment_needed %}
+                    <li class="shopping-item">
+                        <span class="shopping-text">{{ item }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            <!-- Additional Notes -->
+            <div class="plan-notes">
+                <h3>Additional Notes</h3>
+                <ul>
+                    {% for note in plan_data.notes %}
+                    <li>{{ note }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% else %}
+        <!-- No Plan Available -->
+        <div class="no-plan">
+            <div class="no-plan-icon">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <h2>No Workout Plan Available</h2>
+            <p>Generate your personalized workout plan to get started</p>
+            <form method="post" action="{{ url_for('generate_new_workout_plan') }}">
+                <button type="submit" class="btn-generate" id="generateBtnNoPlan">
+                    <i class="fas fa-magic"></i>
+                    <span>Generate My Plan</span>
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Go to Up Button -->
+    <div class="up-button-container">
+        <button class="up-button" id="upButton">
+            <i class="fas fa-arrow-up"></i>
+        </button>
+    </div>
+    
+    <!-- Back Button -->
+    <div class="back-section">
+        <a href="{{ url_for('dashboard') }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Dashboard</span>
+        </a>
+    </div>
+</div>
+<style>
+/* Navigation Buttons */
+.navigation-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+.nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: var(--card-bg);
+    border-radius: 12px;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: all 0.3s var(--ease-smooth);
+    border: 2px solid var(--border-color);
+    width: 100px;
+    box-shadow: var(--shadow-sm);
+}
+.nav-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.nav-btn i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+}
+.nav-btn span {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: center;
+}
+/* Go to Up Button */
+.up-button-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 100;
+}
+.up-button {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+    transition: all 0.3s var(--ease-smooth);
+    font-size: 1.25rem;
+}
+.up-button:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-xl);
+}
+/* Dark mode adjustments */
+[data-theme="dark"] .nav-btn {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+[data-theme="dark"] .nav-btn:hover {
+    border-color: var(--primary-light);
+}
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .navigation-buttons {
+        gap: 0.5rem;
+    }
+    
+    .nav-btn {
+        width: 80px;
+        padding: 0.75rem;
+    }
+    
+    .nav-btn i {
+        font-size: 1.25rem;
+    }
+    
+    .nav-btn span {
+        font-size: 0.75rem;
+    }
+    
+    .up-button-container {
+        bottom: 1rem;
+        right: 1rem;
+    }
+    
+    .up-button {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+}
+/* Weekly Plan - Changed to 3 cards per row */
+.weekly-plan {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+@media (max-width: 1200px) {
+    .weekly-plan {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .weekly-plan {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Loading messages to cycle through
+    const loadingMessages = [
+        "Analyzing your profile",
+        "Selecting exercises",
+        "Building your weekly plan",
+        "Finalizing your workout plan"
+    ];
+    
+    let currentMessageIndex = 0;
+    let messageInterval;
+    
+    // Function to show loading animation
+    function showLoading() {
+        const loadingContainer = document.getElementById('loadingContainer');
+        const generateBtn = document.getElementById('generateBtn');
+        const generateBtnNoPlan = document.getElementById('generateBtnNoPlan');
+        
+        // Show loading container
+        if (loadingContainer) {
+            loadingContainer.style.display = 'block';
+        }
+        
+        // Disable buttons
+        if (generateBtn) {
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i><span>Generating...</span>';
+        }
+        if (generateBtnNoPlan) {
+            generateBtnNoPlan.disabled = true;
+            generateBtnNoPlan.innerHTML = '<i class="fas fa-magic fa-spin"></i><span>Generating...</span>';
+        }
+        
+        // Start cycling through loading messages
+        const loadingMessageElement = document.getElementById('loadingMessage');
+        if (loadingMessageElement) {
+            currentMessageIndex = 0;
+            loadingMessageElement.textContent = loadingMessages[currentMessageIndex];
+            
+            messageInterval = setInterval(() => {
+                currentMessageIndex = (currentMessageIndex + 1) % loadingMessages.length;
+                loadingMessageElement.textContent = loadingMessages[currentMessageIndex];
+            }, 2000); // Change message every 2 seconds
+        }
+    }
+    
+    // Function to hide loading animation
+    function hideLoading() {
+        const loadingContainer = document.getElementById('loadingContainer');
+        const generateBtn = document.getElementById('generateBtn');
+        const generateBtnNoPlan = document.getElementById('generateBtnNoPlan');
+        
+        // Hide loading container
+        if (loadingContainer) {
+            loadingContainer.style.display = 'none';
+        }
+        
+        // Re-enable buttons
+        if (generateBtn) {
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="fas fa-sync-alt"></i><span>Generate New Plan</span>';
+        }
+        if (generateBtnNoPlan) {
+            generateBtnNoPlan.disabled = false;
+            generateBtnNoPlan.innerHTML = '<i class="fas fa-magic"></i><span>Generate My Plan</span>';
+        }
+        
+        // Stop message cycling
+        if (messageInterval) {
+            clearInterval(messageInterval);
+        }
+    }
+    
+    // Check if we were redirected after generation (to avoid double loading)
+    const urlParams = new URLSearchParams(window.location.search);
+    const justGenerated = urlParams.has('generated');
+    
+    // Only show loading animation if not just generated from dashboard
+    if (!justGenerated) {
+        // Handle form submissions for workout plan generation
+        const forms = document.querySelectorAll('form[action*="generate_new_workout_plan"]');
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                showLoading();
+                
+                fetch(this.action, {
+                    method: 'POST',
+                    body: new FormData(this)
+                })
+                .then(response => {
+                    // Hide loading animation
+                    hideLoading();
+                    
+                    // Reload the page with a parameter to indicate we just generated
+                    window.location.href = '/workout_plan?generated=true';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    hideLoading();
+                    alert('An error occurred while generating your workout plan. Please try again.');
+                });
+            });
+        });
+    }
+    
+    // Handle workout item checkboxes
+    const workoutCheckboxes = document.querySelectorAll('.meal-checkbox');
+    
+    workoutCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const workoutItem = this.closest('.workout-item');
+            const planId = workoutItem.dataset.planId;
+            const itemKey = workoutItem.dataset.itemKey;
+            
+            // Visual feedback is handled by CSS
+            
+            // Send AJAX request to toggle completion status
+            fetch('/toggle_workout_item', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    plan_id: planId,
+                    item_key: itemKey
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    // Revert checkbox if update failed
+                    this.checked = !this.checked;
+                    console.error('Failed to update workout item status');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating workout item:', error);
+                // Revert checkbox if error occurred
+                this.checked = !this.checked;
+            });
+        });
+    });
+    
+    // Go to up button functionality
+    const upButton = document.getElementById('upButton');
+    if (upButton) {
+        upButton.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

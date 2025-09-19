@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block header %}Create Your Account{% endblock %}
+{% block content %}
+<div class="text-center mb-4">
+    <div class="logo">
+        <i class="fas fa-user-plus me-2"></i>Join Us
+    </div>
+    <p class="text-muted">Start your health journey today</p>
+</div>
+<form method="POST" action="{{ url_for('signup') }}" class="mx-auto" style="max-width: 400px;">
+    <div class="mb-3">
+        <label for="username" class="form-label">
+            <i class="fas fa-user me-2"></i>Username
+        </label>
+        <input type="text" class="form-control" id="username" name="username" required
+               placeholder="Choose a username" minlength="3">
+        <div class="form-text">Must be at least 3 characters long</div>
+    </div>
+    
+    <div class="mb-3">
+        <label for="password" class="form-label">
+            <i class="fas fa-lock me-2"></i>Password
+        </label>
+        <input type="password" class="form-control" id="password" name="password" required
+               placeholder="Create a password" minlength="8">
+        <div class="form-text">Must be at least 8 characters long</div>
+    </div>
+    
+    <div class="mb-3">
+        <label for="confirm_password" class="form-label">
+            <i class="fas fa-lock me-2"></i>Confirm Password
+        </label>
+        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required
+               placeholder="Confirm your password">
+    </div>
+    
+    <div class="d-grid mb-3">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-user-plus me-2"></i>Create Account
+        </button>
+    </div>
+    
+    <div class="text-center">
+        <p class="mb-0">Already have an account? <a href="{{ url_for('login') }}" class="text-decoration-none">Login</a></p>
+    </div>
+</form>
+<style>
+/* Signup page specific styles */
+.logo {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+.form-control {
+    border-radius: 12px;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.25);
+}
+.form-text {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+}
+.btn-primary {
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+@media (max-width: 768px) {
+    .logo {
+        font-size: 2rem;
+    }
+    
+    form {
+        padding: 0 1rem;
+    }
+}
+</style>
+{% endblock %}
