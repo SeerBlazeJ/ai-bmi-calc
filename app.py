@@ -342,38 +342,7 @@ def generate_chat_response(user_message, user_id):
     except Exception as e:
         app.logger.error(f"Error generating chat response: {str(e)}")
         return "Sorry, I'm having trouble processing your request right now."
-def _port_from_host_url(host_url: str) -> int:
-    u = urlparse(host_url)
-    if u.port:
-        return u.port
-    try:
-        return int(host_url.split(":")[-1])
-    except Exception:
-        return 11435
-def _try_connect_diet_client():
-    # No longer needed for OpenRouter
-    return True
-def _start_diet_sidecar_if_needed():
-    _try_connect_diet_client()
-def _spawn_sidecar_server():
-    port = _port_from_host_url(app.config["DIET_OLLAMA_HOST"])
-    env = os.environ.copy()
-    env["OLLAMA_HOST"] = f"127.0.0.1:{port}"
-    try:
-        subprocess.Popen(
-            ["ollama", "serve"],
-            env=env,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-        )
-        time.sleep(2.0)
-        _try_connect_diet_client()
-        return True
-    except Exception as e:
-        app.logger.error(f"Failed to spawn diet Ollama sidecar: {e}")
-        return False
-_start_diet_sidecar_if_needed()
+
 JSON_BLOCK_RE = re.compile(r"\{.*\}", re.DOTALL)
 def extract_json_strict(text: str):
     if not text:
