@@ -47,18 +47,6 @@ This project uses OpenRouter (https://openrouter.ai/) via `ai_caller.py` to call
 
 Note: older README referenced Ollama — the current code uses OpenRouter. Some legacy Ollama-sidecar code remains but the AI calls are performed by `ai_caller.py`.
 
-## Configuration
-
-- SECRET_KEY: The app sets a default `SECRET_KEY` in `app.py` for development. For production, set a secure random key via `export SECRET_KEY='your-random-key'` or a `.env` loader.
-- OPENROUTER_API_KEY: Set this to your OpenRouter API key (required for AI features).
-
-Recommended environment (example):
-
-```bash
-export OPENROUTER_API_KEY="sk-..."
-export SECRET_KEY="replace-with-a-secure-key"
-```
-
 ## Database
 
 The app uses a local SQLite database file named `health.db`. On first run the app will create required tables automatically. You can remove `health.db` to reset data (or use a migration script if you add one).
@@ -73,11 +61,16 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-2. Export required environment variables:
+2. Set up required variables:
 
-```bash
-export OPENROUTER_API_KEY="your_openrouter_api_key"
-export SECRET_KEY="your_secret_key"
+In app.py:
+```py
+app.config["SECRET_KEY"] = "qwertyuiopasdfghjklzxcvbnm"  # Use your own secret key here to encrypt the data
+```
+
+In ai_caller.py:
+```py
+API_KEY = "openrouter_api_key"  # Enter your openrouter API key here
 ```
 
 3. Start the app (development):
