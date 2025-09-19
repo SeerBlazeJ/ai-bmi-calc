@@ -1,83 +1,117 @@
-# AI-Powered Health and Fitness Companion
+# AI-Powered Health & Fitness Companion
 
-This is a Flask-based web application that serves as a personal health and fitness companion. It provides users with a BMI calculator, personalized meal and workout plans, and an AI-powered chat assistant.
+A Flask web application that helps users track their BMI, generate personalized meal and workout plans, and interact with an AI health coach. The application stores user data in a local SQLite database and uses OpenRouter (via `ai_caller.py`) to produce AI-generated plans and chat responses.
 
-## Features
+## Key features
 
-*   **User Authentication:** Secure user sign-up and login functionality.
-*   **BMI Calculator:** Calculate your Body Mass Index (BMI) to assess your weight status.
-*   **Personalized Meal Plans:** Generate weekly meal plans based on user preferences using Ollama.
-*   **Personalized Workout Plans:** Generate weekly workout schedules to help users stay active using Ollama.
-*   **AI Chat Assistant:** A chat interface powered by Ollama to answer health and fitness-related questions.
-*   **Progress Tracking:** A dashboard to track your progress over time.
+- User authentication (signup/login/logout) with hashed passwords
+- BMI calculator with history and categorized tips
+- Persistent user preferences (diet, allergies, goals, activity level, target weight, etc.)
+- AI-generated weekly meal plans (stored per-week)
+- AI-generated weekly workout plans (stored per-week)
+- Chat interface with AI assistant that uses recent chat history and BMI context
+- Progress view that shows BMI trends for the user and accepted friends
+- Friend request system (send/accept/reject) to share progress
+- Toggle-tracking for completed meal/workout items
 
-## Project Structure
+## Project structure
 
 ```
-├── app.py              # Main Flask application file
-├── health.db           # SQLite database
-├── requirements.txt    # Python dependencies
-├── rebuild_db.py       # Script to rebuild the database
-├── static/
-│   └── styles.css      # CSS stylesheets
-└── templates/
-    ├── base.html       # Base template
-    ├── login.html      # Login page
-    ├── signup.html     # Signup page
-    ├── dashboard.html  # User dashboard
-    ├── calculator.html # BMI calculator
-    ├── meal_plan.html  # Meal plan generator
-    ├── workout_plan.html # Workout plan generator
-    └── chat.html       # AI chat interface
+ai-bmi-calc/
+├── app.py                # Flask application and routes
+├── ai_caller.py          # Lightweight OpenRouter client wrapper used for AI calls
+├── health.db             # SQLite database (created at runtime)
+├── requirements.txt      # Python dependencies
+├── static/               # CSS, favicon, client assets
+└── templates/            # Jinja2 HTML templates (login, signup, dashboard, etc.)
 ```
 
-## Setup and Installation
+## Dependencies
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/your-username/AI-powered-BMI-calculator.git
-    cd AI-powered-BMI-calculator
-    ```
+Dependencies are listed in `requirements.txt`. Key packages:
 
-2.  **Create and activate a virtual environment:**
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate
-    ```
+- Flask
+- requests
+- cs50 (lightweight SQLite wrapper used here)
+- matplotlib (used for chart rendering)
 
-3.  **Install the dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+Install them with:
 
-4.  **Set up Ollama:**
-    This project uses Ollama to power its AI features. Make sure you have Ollama installed and running. You can find installation instructions here: [https://ollama.ai/](https://ollama.ai/)
-
-    Once Ollama is running, pull the `gemma3` model:
-    ```bash
-    ollama pull gemma3
-    ```
-
-5.  **Run the application:**
-    Create a file named `health.db` in the main code directory, and the enter the following command:
-    ```bash
-    flask run
-    ```
-
-    The application will be available at `http://127.0.0.1:5000`.
-
-## Usage
-
-1.  **Sign up** for a new account or **login** if you already have one.
-2.  Use the **BMI Calculator** to check your BMI.
-3.  Generate personalized **Meal Plans** and **Workout Plans**.
-4.  Chat with the **AI Assistant** for any health and fitness queries.
-
-## Note:
-To change the secret key, the user needs to edit the key in the .env folder as well as moify this line of code:
-```python
-app.config["SECRET_KEY"] = "your_secret_key_here"  # In production, use a secure random key
+```bash
+pip install -r requirements.txt
 ```
+
+## AI backend
+
+This project uses OpenRouter (https://openrouter.ai/) via `ai_caller.py` to call hosted models (the default code sets the model to a Llama 3 variant). You must provide an OpenRouter API key via an environment variable named `OPENROUTER_API_KEY` (see notes below). The app prepares system prompts from `diet_coach_prompt.txt` and `workout_coach_prompt.txt` and sends user context for plan generation.
+
+Note: older README referenced Ollama — the current code uses OpenRouter. Some legacy Ollama-sidecar code remains but the AI calls are performed by `ai_caller.py`.
+
+## Configuration
+
+- SECRET_KEY: The app sets a default `SECRET_KEY` in `app.py` for development. For production, set a secure random key via `export SECRET_KEY='your-random-key'` or a `.env` loader.
+- OPENROUTER_API_KEY: Set this to your OpenRouter API key (required for AI features).
+
+Recommended environment (example):
+
+```bash
+export OPENROUTER_API_KEY="sk-..."
+export SECRET_KEY="replace-with-a-secure-key"
+```
+
+## Database
+
+The app uses a local SQLite database file named `health.db`. On first run the app will create required tables automatically. You can remove `health.db` to reset data (or use a migration script if you add one).
+
+## Run locally
+
+1. Create and activate a virtual environment (recommended):
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+2. Export required environment variables:
+
+```bash
+export OPENROUTER_API_KEY="your_openrouter_api_key"
+export SECRET_KEY="your_secret_key"
+```
+
+3. Start the app (development):
+
+```bash
+python app.py
+```
+
+By default the app runs on 127.0.0.1:5501 (see `app.run(...)` in `app.py`).
+
+## Usage overview
+
+- Signup for a new account and login.
+- Set your preferences on the Preferences page (dietary preferences, goals, age, activity level, etc.).
+- Use the BMI Calculator to record weight/height entries; BMI entries are saved and used by the AI to tailor meal/workout plans.
+- Generate weekly meal and workout plans from the Meal Plan and Workout Plan pages.
+- Chat with the AI assistant from the Chat page; messages are saved to history.
+- Track progress and optionally connect with friends to compare charts.
+
+## Security & production notes
+
+- Do not commit secret keys or API keys. Use environment variables or a secrets manager.
+- The default `SECRET_KEY` in `app.py` is for development only. Replace it before deploying.
+- Consider enabling HTTPS, session protection, rate limiting and proper model usage quotas when exposing the app.
+
+## Development notes & troubleshooting
+
+- If AI calls return errors, verify `OPENROUTER_API_KEY` is set correctly and the chosen model is available on OpenRouter.
+- The app expects `diet_coach_prompt.txt` and `workout_coach_prompt.txt` to exist in the project root — they provide system-level prompts for plan generation.
+- If templates or tables are missing, check runtime errors in the console — the app tries to create missing tables on startup.
+
+## Tests
+
+There are no automated tests included. For quick smoke testing: create an account, set preferences, add a BMI entry, and try generating plans and chatting.
 
 ## License
 

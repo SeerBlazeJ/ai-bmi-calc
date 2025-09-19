@@ -1146,4 +1146,4 @@ if __name__ == "__main__":
         app.logger.error(f"Ollama service issue: {message}")
         print(f"WARNING: {message}")
 
-    app.run(host="0.0.0.0",debug=True, port=5501)
+    app.run(host="127.0.0.1",debug=True, port=5501)
