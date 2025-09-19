@@ -11,7 +11,7 @@ headers = {
 def call (sys_prompt, history, message):
     global data
     data = {
-     "model": "meta-llama/llama-3.3-8b-instruct:free",  # You can choose any model available on OpenRouter
+     "model": "meta-llama/llama-4-maverick:free",  # You can choose any model available on OpenRouter
         "messages": [
             {"role": "system", "content": sys_prompt},
             {"role": "system", "content": f"This is the previous history for the user that you should keep context of while generating: {history}"},
