@@ -1,213 +1,562 @@
 {% extends "base.html" %}
 {% block header %}Health Dashboard{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4>Welcome, {{ session['username'] }}</h4>
-    <a href="{{ url_for('logout') }}" class="btn btn-secondary">
-        <i class="fas fa-sign-out-alt"></i> Logout
-    </a>
-</div>
-
-<div class="top-dashboard mb-4">
-    <div class="left-column">
-        <!-- BMI Tracker -->
-        <div class="dashboard-card card-bmi h-100">
-            <h5><i class="fas fa-calculator me-2"></i> BMI Tracker</h5>
-            {% if latest_bmi %}
-            <div class="text-center my-auto">
-                <div class="bmi-value display-2 fw-bold">{{ latest_bmi.bmi }}</div>
-                <span class="bmi-category badge {{ latest_bmi.category|lower }}">{{ latest_bmi.category }}</span>
-            </div>
-            <div class="health-insight text-center small mt-3">
-                <p class="mb-1">Recorded on {{ latest_bmi.created_at.strftime('%B %d, %Y') }}</p>
-                <p class="mb-0">Weight: {{ latest_bmi.weight }}kg | Height: {{ latest_bmi.height }}cm</p>
-            </div>
-            {% else %}
-            <div class="health-insight text-center my-auto">
-                <i class="fas fa-exclamation-triangle fa-2x text-muted mb-3"></i>
-                <h6>No Data Available</h6>
-                <p class="mb-0 small">Calculate your BMI to get started!</p>
-            </div>
-            {% endif %}
-            <div class="d-grid gap-2 mt-3">
-                <a href="{{ url_for('calculator') }}" class="btn btn-sm btn-primary"><i
-                        class="fas fa-plus-circle me-2"></i> Add New Record</a>
-            </div>
+<div class="dashboard-container">
+    <!-- Header Section -->
+    <div class="dashboard-header">
+        <div class="greeting-section">
+            <h1 class="dashboard-title">Welcome, {{ session['username'] }}</h1>
+            <p class="dashboard-subtitle">Your personalized health overview</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('logout') }}" class="btn btn-logout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
         </div>
     </div>
-    <div class="right-column">
-        <!-- Today's Health Tip -->
-        <div class="dashboard-card card-tip mb-4">
-            <h5><i class="fas fa-lightbulb me-2"></i> Today's Health Tip</h5>
-            <div class="health-insight mt-3">
+
+    <!-- Top Dashboard Section -->
+    <div class="top-dashboard">
+        <!-- BMI Tracker Card -->
+        <div class="dashboard-card card-bmi">
+            <div class="card-header">
+                <div class="card-icon bmi-icon">
+                    <i class="fas fa-weight-scale"></i>
+                </div>
+                <h3 class="card-title">BMI Tracker</h3>
+            </div>
+            
+            <div class="card-content">
                 {% if latest_bmi %}
-                {% if latest_bmi.category == "Underweight" %}
-                <h6><i class="fas fa-arrow-up me-2"></i> Focus on Nutrient-Dense Foods</h6>
-                <p class="mb-0 small">Incorporate foods like avocados, nuts, and lean proteins to support healthy weight
-                    gain and muscle development.</p>
-                {% elif latest_bmi.category == "Normal" %}
-                <h6><i class="fas fa-check-circle me-2"></i> Maintain a Balanced Lifestyle</h6>
-                <p class="mb-0 small">You're doing great! Continue to focus on a balanced diet and regular physical
-                    activity to maintain your health.</p>
-                {% elif latest_bmi.category == "Overweight" %}
-                <h6><i class="fas fa-walking me-2"></i> Stay Active and Mindful</h6>
-                <p class="mb-0 small">Incorporate more movement into your day, like brisk walks, and practice mindful
-                    eating to support your goals.</p>
+                <div class="bmi-display">
+                    <div class="bmi-value">{{ latest_bmi.bmi }}</div>
+                    <span class="bmi-category badge {{ latest_bmi.category|lower }}">{{ latest_bmi.category }}</span>
+                </div>
+                
+                <div class="bmi-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Recorded on</span>
+                        <span class="detail-value">{{ latest_bmi.created_at.strftime('%B %d, %Y') }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Weight</span>
+                        <span class="detail-value">{{ latest_bmi.weight }}kg</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Height</span>
+                        <span class="detail-value">{{ latest_bmi.height }}cm</span>
+                    </div>
+                </div>
                 {% else %}
-                <h6><i class="fas fa-heartbeat me-2"></i> Prioritize Sustainable Habits</h6>
-                <p class="mb-0 small">Focus on making in darkmode's graph for progress in progress.html, the graphshould
-                    be of grey colour in darkmode and of dark grey in light modesmall, sustainable changes to your diet
-                    and exercise routine. Consistency is key.</p>
-                {% endif %}
-                {% else %}
-                <h6><i class="fas fa-star me-2"></i> Get Started on Your Journey</h6>
-                <p class="mb-0 small">Calculate your BMI to receive personalized health tips and unlock your full
-                    dashboard experience.</p>
+                <div class="no-data">
+                    <div class="no-data-icon">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <h4>No Data Available</h4>
+                    <p>Calculate your BMI to get started!</p>
+                </div>
                 {% endif %}
             </div>
+            
+            <div class="card-footer">
+                <a href="{{ url_for('calculator') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus-circle"></i> Add New Record
+                </a>
+            </div>
         </div>
-        <!-- Preferences -->
-        <div class="dashboard-card action-card card-preferences">
-            <h5><i class="fas fa-sliders-h me-2"></i> Preferences</h5>
-            <p class="small text-secondary my-auto">Personalize your meal plans and workout schedules <br> by setting
-                your dietary needs, fitness goals, and more.</p>
-            <a href="{{ url_for('preferences') }}" class="btn btn-sm btn-primary mt-3"><i
-                    class="fas fa-arrow-right me-1"></i> Set Preferences</a>
+
+        <!-- Right Column -->
+        <div class="right-column">
+            <!-- Health Tip Card -->
+            <div class="dashboard-card card-tip">
+                <div class="card-header">
+                    <div class="card-icon tip-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h3 class="card-title">Today's Health Tip</h3>
+                </div>
+                
+                <div class="card-content">
+                    <div class="health-tip">
+                        {% if latest_bmi %}
+                        {% if latest_bmi.category == "Underweight" %}
+                        <h4><i class="fas fa-utensils"></i> Focus on Nutrient-Dense Foods</h4>
+                        <p>Incorporate foods like avocados, nuts, and lean proteins to support healthy weight gain and muscle development.</p>
+                        {% elif latest_bmi.category == "Normal" %}
+                        <h4><i class="fas fa-balance-scale"></i> Maintain a Balanced Lifestyle</h4>
+                        <p>You're doing great! Continue to focus on a balanced diet and regular physical activity to maintain your health.</p>
+                        {% elif latest_bmi.category == "Overweight" %}
+                        <h4><i class="fas fa-walking"></i> Stay Active and Mindful</h4>
+                        <p>Incorporate more movement into your day, like brisk walks, and practice mindful eating to support your goals.</p>
+                        {% else %}
+                        <h4><i class="fas fa-heartbeat"></i> Prioritize Sustainable Habits</h4>
+                        <p>Focus on making small, sustainable changes to your diet and exercise routine. Consistency is key.</p>
+                        {% endif %}
+                        {% else %}
+                        <h4><i class="fas fa-rocket"></i> Get Started on Your Journey</h4>
+                        <p>Calculate your BMI to receive personalized health tips and unlock your full dashboard experience.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preferences Card -->
+            <div class="dashboard-card card-preferences">
+                <div class="card-header">
+                    <div class="card-icon preferences-icon">
+                        <i class="fas fa-sliders-h"></i>
+                    </div>
+                    <h3 class="card-title">Preferences</h3>
+                </div>
+                
+                <div class="card-content">
+                    <p>Personalize your meal plans and workout schedules by setting your dietary needs, fitness goals, and more.</p>
+                </div>
+                
+                <div class="card-footer">
+                    <a href="{{ url_for('preferences') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-cog"></i> Set Preferences
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="dashboard-grid">
-    <!-- AI Meal Plan -->
-    <div class="dashboard-card action-card card-meal">
-        <div class="action-card-icon"><i class="fas fa-utensils"></i></div>
-        <h5>AI Meal Plan</h5>
-        <p class="small text-secondary">Personalized meal plans.</p>
-        <a href="{{ url_for('meal_plan') }}" class="btn btn-sm btn-primary mt-auto"><i
-                class="fas fa-arrow-right me-1"></i> View</a>
-    </div>
+    <!-- Feature Cards Grid -->
+    <div class="features-grid">
+        <!-- AI Meal Plan Card -->
+        <div class="feature-card card-meal">
+            <div class="feature-icon meal-icon">
+                <i class="fas fa-utensils"></i>
+            </div>
+            <h3 class="feature-title">AI Meal Plan</h3>
+            <p class="feature-description">Personalized meal plans tailored to your dietary needs and goals.</p>
+            <a href="{{ url_for('meal_plan') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-arrow-right"></i> View
+            </a>
+        </div>
 
-    <!-- AI Workout Plan -->
-    <div class="dashboard-card action-card card-workout">
-        <div class="action-card-icon"><i class="fas fa-dumbbell"></i></div>
-        <h5>AI Workout Plan</h5>
-        <p class="small text-secondary">Custom workout schedules.</p>
-        <a href="{{ url_for('workout_plan') }}" class="btn btn-sm btn-primary mt-auto"><i
-                class="fas fa-arrow-right me-1"></i> View</a>
-    </div>
+        <!-- AI Workout Plan Card -->
+        <div class="feature-card card-workout">
+            <div class="feature-icon workout-icon">
+                <i class="fas fa-dumbbell"></i>
+            </div>
+            <h3 class="feature-title">AI Workout Plan</h3>
+            <p class="feature-description">Custom workout schedules designed to match your fitness level.</p>
+            <a href="{{ url_for('workout_plan') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-arrow-right"></i> View
+            </a>
+        </div>
 
-    <!-- Progress Analytics -->
-    <div class="dashboard-card action-card card-analytics">
-        <div class="action-card-icon"><i class="fas fa-chart-area"></i></div>
-        <h5>Progress Analytics</h5>
-        <p class="small text-secondary">Visualize your trends.</p>
-        <a href="{{ url_for('progress') }}" class="btn btn-sm btn-primary mt-auto"><i
-                class="fas fa-arrow-right me-1"></i> View</a>
-    </div>
+        <!-- Progress Analytics Card -->
+        <div class="feature-card card-analytics">
+            <div class="feature-icon analytics-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h3 class="feature-title">Progress Analytics</h3>
+            <p class="feature-description">Visualize your health trends and track your improvements.</p>
+            <a href="{{ url_for('progress') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-arrow-right"></i> View
+            </a>
+        </div>
 
-    <!-- Kinetic Edge Assistant -->
-    <div class="dashboard-card action-card card-assistant">
-        <div class="action-card-icon"><i class="fas fa-robot"></i></div>
-        <h5>Kinetic Edge Assistant</h5>
-        <p class="small text-secondary">Chat with our AI health coach.</p>
-        <a href="{{ url_for('chat') }}" class="btn btn-sm btn-primary mt-auto"><i class="fas fa-arrow-right me-1"></i>
-            Chat</a>
+        <!-- Kinetic Edge Assistant Card -->
+        <div class="feature-card card-assistant">
+            <div class="feature-icon assistant-icon">
+                <i class="fas fa-comments"></i>
+            </div>
+            <h3 class="feature-title">Health Assistant</h3>
+            <p class="feature-description">Chat with our AI health coach for personalized advice.</p>
+            <a href="{{ url_for('chat') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-arrow-right"></i> Chat
+            </a>
+        </div>
     </div>
 </div>
 
 <style>
+/* Dashboard Container */
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+/* Dashboard Header */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.greeting-section h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.greeting-section p {
+    color: var(--text-secondary);
+    margin: 0.25rem 0 0;
+}
+
+.btn-logout {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(245, 54, 92, 0.1);
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-logout:hover {
+    background: var(--danger-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Top Dashboard Section */
+.top-dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Dashboard Cards */
+.dashboard-card {
+    background: var(--card-bg);
+    border-radius: 1rem;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+    margin-right: 1rem;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.bmi-icon {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.tip-icon {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.preferences-icon {
+    background: linear-gradient(135deg, #ff6b9d 0%, #f093fb 100%);
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.card-content {
+    padding: 1.5rem;
+    flex: 1;
+}
+
+.card-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* BMI Card Styles */
+.bmi-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.bmi-value {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1;
+    margin-bottom: 0.75rem;
+}
+
+.bmi-category {
+    font-size: 1rem;
+    padding: 0.35rem 1rem;
+    border-radius: 50px;
+    font-weight: 600;
+}
+
+.badge.underweight {
+    background-color: #6c757d;
+}
+
+.badge.normal {
+    background-color: #28a745;
+}
+
+.badge.overweight {
+    background-color: #ffc107;
+}
+
+.badge.obese {
+    background-color: #dc3545;
+}
+
+.bmi-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.detail-value {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* No Data State */
+.no-data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.5rem 0;
+}
+
+.no-data-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.no-data h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem;
+}
+
+.no-data p {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Health Tip Card */
+.health-tip h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.75rem;
+}
+
+.health-tip h4 i {
+    color: var(--primary-color);
+}
+
+.health-tip p {
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Features Grid */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+}
+
+/* Feature Cards */
+.feature-card {
+    background: var(--card-bg);
+    border-radius: 1rem;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+}
+
+.feature-icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: white;
+    margin-bottom: 1.25rem;
+}
+
+.meal-icon {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.workout-icon {
+    background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+}
+
+.analytics-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.assistant-icon {
+    background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+}
+
+.feature-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.75rem;
+}
+
+.feature-description {
+    color: var(--text-secondary);
+    margin: 0 0 1.25rem;
+    flex: 1;
+}
+
+/* Buttons */
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
     .top-dashboard {
-        display: flex;
-        gap: 1.5rem;
+        grid-template-columns: 1fr;
     }
-
-    .left-column {
-        flex: 1;
-    }
-
-    .right-column {
-        flex: 2;
-        display: flex;
+    
+    .dashboard-header {
         flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
     }
+}
 
-    .dashboard-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1.5rem;
+@media (max-width: 576px) {
+    .dashboard-container {
+        padding: 1rem;
     }
-
-    .dashboard-card {
-        background: var(--card-bg);
-        border-radius: 1rem;
-        padding: 1.5rem;
-        border: 1px solid var(--border-color);
-        box-shadow: var(--shadow-sm);
-        transition: all 0.3s ease;
-        display: flex;
-        flex-direction: column;
+    
+    .features-grid {
+        grid-template-columns: 1fr;
     }
-
-    .dashboard-card:hover {
-        transform: translateY(-5px);
-        box-shadow: var(--shadow-lg);
+    
+    .greeting-section h1 {
+        font-size: 1.75rem;
     }
-
-    @media (max-width: 992px) {
-        .top-dashboard {
-            flex-direction: column;
-        }
-
-        .dashboard-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-
-    @media (max-width: 576px) {
-        .dashboard-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
+    
     .bmi-value {
-        color: var(--primary-color);
+        font-size: 3rem;
     }
+}
 
-    .bmi-category {
-        font-size: 1rem;
-        padding: 0.5em 1em;
-    }
+/* Dark Mode Adjustments */
+[data-theme="dark"] .no-data-icon {
+    background: rgba(255, 255, 255, 0.1);
+    color: #adb5bd;
+}
 
-    .badge.underweight {
-        background-color: #6c757d;
-    }
+[data-theme="dark"] .btn-logout {
+    background: rgba(245, 54, 92, 0.2);
+    border-color: #f5365c;
+    color: #f5365c;
+}
 
-    .badge.normal {
-        background-color: #28a745;
-    }
-
-    .badge.overweight {
-        background-color: #ffc107;
-    }
-
-    .badge.obese {
-        background-color: #dc3545;
-    }
-
-    .action-card {
-        align-items: center;
-        text-align: center;
-    }
-
-    .action-card-icon {
-        font-size: 2.5rem;
-        color: var(--primary-color);
-        margin-bottom: 1rem;
-    }
-
-    .action-card h5 {
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
+[data-theme="dark"] .btn-logout:hover {
+    background: #f5365c;
+    color: white;
+}
 </style>
 {% endblock %}
