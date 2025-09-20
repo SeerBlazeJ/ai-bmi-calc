@@ -878,6 +878,39 @@ def toggle_meal_item():
         return jsonify({"success": False, "error": "Internal server error"})
 
 
+@app.route("/toggle_shopping_item", methods=["POST"])
+@login_required
+def toggle_shopping_item():
+    try:
+        data = request.json
+        plan_id = data.get("plan_id")
+        item_key = data.get("item_key")
+
+        if not plan_id or not item_key:
+            return jsonify({"success": False, "error": "Missing plan_id or item_key"})
+
+        plan = db.execute("""
+            SELECT * FROM weekly_diet_plans WHERE id = ? AND user_id = ?
+        """, plan_id, session["user_id"])
+
+        if plan:
+            completed_items = json.loads(plan[0]["completed_items"] or "{}")
+            completed_items[item_key] = not completed_items.get(item_key, False)
+
+            db.execute("""
+                UPDATE weekly_diet_plans
+                SET completed_items = ?
+                WHERE id = ? AND user_id = ?
+            """, json.dumps(completed_items), plan_id, session["user_id"])
+
+            return jsonify({"success": True, "completed": completed_items[item_key]})
+
+        return jsonify({"success": False, "error": "Plan not found"})
+    except Exception as e:
+        app.logger.error(f"Error toggling shopping item: {str(e)}")
+        return jsonify({"success": False, "error": "Internal server error"})
+
+
 # Send a friend request
 @app.route("/send_friend_request", methods=["POST"])
 @login_required
@@ -1115,4 +1148,4 @@ if __name__ == "__main__":
         app.logger.error(f"Ollama service issue: {message}")
         print(f"WARNING: {message}")
 
-    app.run(host="127.0.0.1",debug=True, port=5501)
+    app.run(host="0.0.0.0",debug=True, port=5501)
