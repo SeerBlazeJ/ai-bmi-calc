@@ -1,40 +1,852 @@
 {% extends "base.html" %}
 {% block header %}Health Progress{% endblock %}
 {% block content %}
+<style>
+    :root {
+        --primary-color: #5e72e4;
+        --secondary-color: #11cdef;
+        --success-color: #2dce89;
+        --warning-color: #fb6340;
+        --danger-color: #f5365c;
+        --info-color: #11cdef;
+        --info-gradient: linear-gradient(135deg, #11cdef 0%, #1171ef 100%);
+        --text-primary: #32325d;
+        --text-secondary: #525f7f;
+        --text-tertiary: #8898aa;
+        --bg-primary: #f8f9fe;
+        --bg-secondary: #ffffff;
+        --bg-tertiary: #f1f3f6;
+        --bg-quaternary: #e9ecef;
+        --card-bg: #ffffff;
+        --border-color: #e3e3e3;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+        --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+        --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.15);
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #2dce89 0%, #2dcecc 100%);
+        --danger-gradient: linear-gradient(135deg, #f5365c 0%, #f56036 100%);
+    }
+
+    [data-theme="dark"] {
+        --text-primary: #ffffff;
+        --text-secondary: #c1c9d2;
+        --text-tertiary: #8b92a9;
+        --bg-primary: #0b0e17;
+        --bg-secondary: #151823;
+        --bg-tertiary: #1f2332;
+        --bg-quaternary: #2a2e3f;
+        --card-bg: #151823;
+        --border-color: #2a2e3f;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+        --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.3);
+        --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.4);
+    }
+
+    .dashboard-card {
+        background: var(--card-bg);
+        border-radius: 16px;
+        box-shadow: var(--shadow-xl);
+        border: 1px solid var(--border-color);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-2xl);
+    }
+
+    .dashboard-card h5 {
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .dashboard-card h5 i {
+        color: var(--primary-color);
+    }
+
+    .health-insight {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        padding: 1.25rem;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .health-insight:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .health-insight h6 {
+        color: var(--text-secondary);
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .health-insight h6 i {
+        color: var(--primary-color);
+    }
+
+    .bmi-value {
+        color: var(--primary-color);
+        font-weight: 700;
+        margin: 0.5rem 0;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 400px;
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .friend-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .friend-badge {
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .friend-badge i {
+        font-size: 0.75rem;
+    }
+
+    .friend-form {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .friend-form input {
+        flex: 1;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .friend-form input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(94, 114, 228, 0.2);
+    }
+
+    .friend-form button {
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .friend-form button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(94, 114, 228, 0.3);
+    }
+
+    .friend-form button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .pending-requests {
+        margin-top: 1.5rem;
+    }
+
+    .pending-requests h6 {
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .request-item {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+
+    .request-item:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .request-username {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .request-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .request-actions button {
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .accept-btn {
+        background: var(--success-gradient);
+        color: white;
+    }
+
+    .accept-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(45, 206, 137, 0.3);
+    }
+
+    .reject-btn {
+        background: var(--danger-gradient);
+        color: white;
+    }
+
+    .reject-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(245, 54, 92, 0.3);
+    }
+
+    .progress-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .summary-card {
+        background: var(--bg-secondary);
+        border-radius: 16px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .summary-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        aspect-ratio: 1 / 1;
+        flex-shrink: 0;
+        position: relative;
+    }
+
+    .summary-icon::before {
+        content: '';
+        display: block;
+        padding-top: 100%;
+    }
+
+    .summary-icon i {
+        font-size: 2rem;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .summary-icon.records {
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    .summary-icon.bmi {
+        background: var(--info-gradient);
+        color: white;
+    }
+
+    .summary-icon.weight {
+        background: var(--success-gradient);
+        color: white;
+    }
+
+    .summary-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .summary-label {
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .insights-container {
+        background: var(--bg-secondary);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .insight-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .insight-card {
+        background: var(--bg-tertiary);
+        border-radius: 12px;
+        padding: 1.25rem;
+        transition: all 0.3s ease;
+    }
+
+    .insight-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .insight-card h6 {
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .insight-card h6 i {
+        color: var(--primary-color);
+    }
+
+    .insight-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .insight-value.positive {
+        color: var(--success-color);
+    }
+
+    .insight-value.negative {
+        color: var(--danger-color);
+    }
+
+    .insight-value.neutral {
+        color: var(--info-color);
+    }
+
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .action-card {
+        background: var(--bg-secondary);
+        border-radius: 16px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .action-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: var(--primary-gradient);
+    }
+
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .action-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+    }
+
+    .action-icon.bmi {
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    .action-icon.meal {
+        background: var(--success-gradient);
+        color: white;
+    }
+
+    .action-icon.workout {
+        background: var(--warning-gradient);
+        color: white;
+    }
+
+    .action-card h6 {
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+
+    .action-card p {
+        color: var(--text-secondary);
+        margin-bottom: 1.25rem;
+        flex-grow: 1;
+    }
+
+    .action-card .btn {
+        align-self: flex-start;
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(94, 114, 228, 0.3);
+    }
+
+    .btn-secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-secondary:hover {
+        background: var(--bg-quaternary);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+
+    .no-data {
+        text-align: center;
+        padding: 3rem 1.5rem;
+    }
+
+    .no-data-icon {
+        font-size: 4rem;
+        color: var(--text-tertiary);
+        margin-bottom: 1.5rem;
+    }
+
+    .no-data h5 {
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .no-data p {
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .no-data-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        background: white;
+        box-shadow: var(--shadow-xl);
+        display: none;
+        align-items: center;
+        gap: 0.75rem;
+        z-index: 1000;
+        transform: translateX(120%);
+        transition: all 0.3s ease;
+    }
+
+    .notification.show {
+        transform: translateX(0);
+    }
+
+    .notification.success {
+        border-left: 4px solid var(--success-color);
+    }
+
+    .notification.error {
+        border-left: 4px solid var(--danger-color);
+    }
+
+    .notification-icon {
+        font-size: 1.25rem;
+    }
+
+    .notification.success .notification-icon {
+        color: var(--success-color);
+    }
+
+    .notification.error .notification-icon {
+        color: var(--danger-color);
+    }
+
+    .notification-content {
+        flex-grow: 1;
+    }
+
+    .notification-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .notification-message {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .notification-close {
+        background: none;
+        border: none;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        font-size: 1.25rem;
+        padding: 0.25rem;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+
+    .notification-close:hover {
+        background: rgba(0, 0, 0, 0.1);
+        color: var(--text-primary);
+    }
+
+    @media (max-width: 768px) {
+        .chart-container {
+            height: 300px;
+        }
+
+        .progress-summary {
+            grid-template-columns: 1fr;
+        }
+
+        .insight-row {
+            grid-template-columns: 1fr;
+        }
+
+        .quick-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .no-data-actions {
+            flex-direction: column;
+        }
+
+        .notification {
+            left: 20px;
+            right: 20px;
+            transform: translateY(-120%);
+        }
+
+        .notification.show {
+            transform: translateY(0);
+        }
+    }
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4>Health Progress</h4>
     <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Dashboard
     </a>
 </div>
+
 <!-- Social Progress Feature: Friends Management -->
-<div class="dashboard-card mb-4">
+<div class="dashboard-card">
     <div class="row">
         <!-- Friend Progress Legend -->
         <div class="col-md-6">
             <h6><i class="fas fa-users me-2"></i>Progress Comparison</h6>
-            <div class="d-flex flex-wrap">
-                <span class="badge bg-primary me-2 mb-2">You ({{ user_username }})</span>
+            <div class="friend-legend">
+                <span class="friend-badge bg-primary">
+                    <i class="fas fa-user"></i> You ({{ user_username }})
+                </span>
                 {% for friend in friends %}
-                <span class="badge bg-info me-2 mb-2">{{ friend.username }}</span>
+                <span class="friend-badge bg-info">
+                    <i class="fas fa-user"></i> {{ friend.username }}
+                </span>
                 {% endfor %}
             </div>
         </div>
         <!-- Add Friend Form -->
         <div class="col-md-6">
-            <form id="addFriendForm" class="d-flex align-items-center mb-2">
-                <input type="text" id="friendUsername" class="form-control me-2" placeholder="Friend's username">
-                <button type="submit" class="btn btn-primary" style="width: 111px; height: 55px; margin-left: 22px;">Send</button>
+            <form id="addFriendForm" class="friend-form">
+                <input type="text" id="friendUsername" class="form-control" placeholder="Friend's username">
+                <button type="submit" id="addFriendBtn">
+                    <i class="fas fa-user-plus"></i> Add Friend
+                </button>
             </form>
         </div>
     </div>
     <!-- Pending Friend Requests -->
-    <div id="pendingRequests" class="mt-3" style="display: none;">
+    <div id="pendingRequests" class="pending-requests" style="display: none;">
         <h6><i class="fas fa-user-clock me-2"></i>Pending Friend Requests</h6>
-        <div id="requestsList" class="list-group">
+        <div id="requestsList">
             <!-- Requests will be populated here -->
         </div>
     </div>
+</div>
+
+{% if all_chart_data[user_username].dates|length > 0 %}
+<!-- BMI Progress Chart -->
+<div class="dashboard-card">
+    <h5><i class="fas fa-chart-line me-2"></i>BMI Progress Comparison</h5>
+    <div class="chart-container">
+        <canvas id="bmiChart"></canvas>
+    </div>
+</div>
+
+<!-- Weight Progress Chart -->
+<div class="dashboard-card">
+    <h5><i class="fas fa-weight-hanging me-2"></i>Weight Progress Comparison</h5>
+    <div class="chart-container">
+        <canvas id="weightChart"></canvas>
+    </div>
+</div>
+
+<!-- Progress Summary -->
+<div class="dashboard-card">
+    <h5><i class="fas fa-chart-pie me-2"></i>Your Progress Summary</h5>
+    <div class="progress-summary">
+        <div class="summary-card">
+            <div class="summary-icon records">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="summary-value">{{ all_chart_data[user_username].dates|length }}</div>
+            <div class="summary-label">Total Records</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-icon bmi">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="summary-value">{{ all_chart_data[user_username].bmi_values|last }}</div>
+            <div class="summary-label">Latest BMI</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-icon weight">
+                <i class="fas fa-weight-scale"></i>
+            </div>
+            <div class="summary-value">{{ all_chart_data[user_username].weights|last }}kg</div>
+            <div class="summary-label">Latest Weight</div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Insights -->
+<div class="dashboard-card">
+    <h5><i class="fas fa-lightbulb me-2"></i>Progress Insights</h5>
+    <div class="insights-container">
+        {% if all_chart_data[user_username].dates|length > 1 %}
+        {% set bmi_change = all_chart_data[user_username].bmi_values|last - all_chart_data[user_username].bmi_values|first %}
+        {% set weight_change = all_chart_data[user_username].weights|last - all_chart_data[user_username].weights|first %}
+        <div class="insight-row">
+            <div class="insight-card">
+                <h6><i class="fas fa-trending-up"></i> BMI Trend</h6>
+                {% if bmi_change > 0 %}
+                <div class="insight-value negative">+{{ bmi_change|round(1) }}</div>
+                <p class="mb-0">Increase since first record</p>
+                {% elif bmi_change < 0 %}
+                <div class="insight-value positive">{{ bmi_change|round(1) }}</div>
+                <p class="mb-0">Decrease since first record</p>
+                {% else %}
+                <div class="insight-value neutral">0</div>
+                <p class="mb-0">No change since first record</p>
+                {% endif %}
+            </div>
+            <div class="insight-card">
+                <h6><i class="fas fa-weight-hanging"></i> Weight Trend</h6>
+                {% if weight_change > 0 %}
+                <div class="insight-value negative">+{{ weight_change|round(1) }}kg</div>
+                <p class="mb-0">Gain since first record</p>
+                {% elif weight_change < 0 %}
+                <div class="insight-value positive">{{ weight_change|round(1) }}kg</div>
+                <p class="mb-0">Loss since first record</p>
+                {% else %}
+                <div class="insight-value neutral">0kg</div>
+                <p class="mb-0">No change since first record</p>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <p class="mb-0 text-center">Add more BMI records to see progress trends and insights.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="dashboard-card">
+    <h5><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+    <div class="quick-actions">
+        <div class="action-card">
+            <div class="action-icon bmi">
+                <i class="fas fa-plus-circle"></i>
+            </div>
+            <h6>Add New Record</h6>
+            <p>Log your current weight and height to track your BMI progress over time.</p>
+            <a href="{{ url_for('calculator') }}" class="btn btn-primary">
+                <i class="fas fa-calculator"></i> Calculate BMI
+            </a>
+        </div>
+        <div class="action-card">
+            <div class="action-icon meal">
+                <i class="fas fa-utensils"></i>
+            </div>
+            <h6>Update Meal Plan</h6>
+            <p>Generate a new personalized meal plan based on your current preferences and goals.</p>
+            <a href="{{ url_for('meal_plan') }}" class="btn btn-primary">
+                <i class="fas fa-calendar-week"></i> View Meal Plan
+            </a>
+        </div>
+        <div class="action-card">
+            <div class="action-icon workout">
+                <i class="fas fa-dumbbell"></i>
+            </div>
+            <h6>Workout Plan</h6>
+            <p>Get a customized workout plan tailored to your fitness level and goals.</p>
+            <a href="{{ url_for('workout_plan') }}" class="btn btn-primary">
+                <i class="fas fa-running"></i> View Workout Plan
+            </a>
+        </div>
+    </div>
+</div>
+{% else %}
+<!-- No Data Available -->
+<div class="dashboard-card">
+    <div class="no-data">
+        <div class="no-data-icon">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <h5>No Progress Data</h5>
+        <p>Start tracking your BMI to see your progress over time! Add your first BMI record to get started with your health journey.</p>
+        <div class="no-data-actions">
+            <a href="{{ url_for('calculator') }}" class="btn btn-primary">
+                <i class="fas fa-calculator"></i> Calculate BMI
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Notification Container -->
+<div id="notification" class="notification">
+    <div class="notification-icon">
+        <i class="fas fa-check-circle"></i>
+    </div>
+    <div class="notification-content">
+        <div class="notification-title">Success</div>
+        <div class="notification-message">Your action was completed successfully.</div>
+    </div>
+    <button class="notification-close" aria-label="Close notification">
+        <i class="fas fa-times"></i>
+    </button>
 </div>
 
 <!-- Friend Request Handling Scripts -->
@@ -44,7 +856,18 @@
         document.getElementById('addFriendForm').addEventListener('submit', function (e) {
             e.preventDefault();
             const username = document.getElementById('friendUsername').value;
-            sendFriendRequest(username);
+            const button = document.getElementById('addFriendBtn');
+            
+            if (!username.trim()) {
+                showNotification('Error', 'Please enter a username', 'error');
+                return;
+            }
+            
+            // Disable button and show loading state
+            button.disabled = true;
+            button.innerHTML = '<span class="loading-spinner"></span> Sending...';
+            
+            sendFriendRequest(username, button);
         });
 
         // Load pending friend requests
@@ -52,9 +875,19 @@
 
         // Check for new requests periodically
         setInterval(loadPendingRequests, 30000); // Check every 30 seconds
+        
+        // Set up notification close button event listener
+        const notificationClose = document.querySelector('.notification-close');
+        if (notificationClose) {
+            notificationClose.addEventListener('click', function() {
+                const notification = document.getElementById('notification');
+                notification.classList.remove('show');
+                notification.style.display = 'none';
+            });
+        }
     });
 
-    function sendFriendRequest(username) {
+    function sendFriendRequest(username, button) {
         fetch('{{ url_for("send_friend_request") }}', {
             method: 'POST',
             headers: {
@@ -64,16 +897,23 @@
         })
             .then(response => response.json())
             .then(data => {
+                // Reset button state
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-user-plus"></i> Add Friend';
+                
                 if (data.success) {
-                    alert('Friend request sent successfully!');
+                    showNotification('Success', 'Friend request sent successfully!', 'success');
                     document.getElementById('friendUsername').value = '';
                 } else {
-                    alert(data.error || 'Failed to send friend request');
+                    showNotification('Error', data.error || 'Failed to send friend request', 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Failed to send friend request');
+                // Reset button state
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-user-plus"></i> Add Friend';
+                showNotification('Error', 'Failed to send friend request', 'error');
             });
     }
 
@@ -87,18 +927,18 @@
                 if (data.requests && data.requests.length > 0) {
                     requestsContainer.style.display = 'block';
                     requestsList.innerHTML = data.requests.map(request => `
-                <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>${request.username}</span>
-                    <div class="btn-group">
-                        <button onclick="handleRequest('${request.user_id}', 'accept')" class="btn btn-sm btn-success">
-                            <i class="fas fa-check"></i> Accept
-                        </button>
-                        <button onclick="handleRequest('${request.user_id}', 'reject')" class="btn btn-sm btn-danger">
-                            <i class="fas fa-times"></i> Reject
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+                        <div class="request-item">
+                            <span class="request-username">${request.username}</span>
+                            <div class="request-actions">
+                                <button onclick="handleRequest('${request.user_id}', 'accept')" class="accept-btn">
+                                    <i class="fas fa-check"></i> Accept
+                                </button>
+                                <button onclick="handleRequest('${request.user_id}', 'reject')" class="reject-btn">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
                 } else {
                     requestsContainer.style.display = 'none';
                 }
@@ -119,37 +959,54 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(data.message);
+                    showNotification('Success', data.message, 'success');
                     loadPendingRequests(); // Refresh the requests list
                     if (action === 'accept') {
                         location.reload(); // Refresh the page to update friends list
                     }
                 } else {
-                    alert(data.error || 'Failed to handle friend request');
+                    showNotification('Error', data.error || 'Failed to handle friend request', 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Failed to handle friend request');
+                showNotification('Error', 'Failed to handle friend request', 'error');
             });
     }
-</script>
 
-{% if all_chart_data[user_username].dates|length > 0 %}
-<!-- BMI Progress Chart -->
-<div class="dashboard-card mb-4">
-    <h5><i class="fas fa-chart-line me-2"></i>BMI Progress Comparison</h5>
-    <div class="chart-container" style="position: relative; height: 400px;">
-        <canvas id="bmiChart"></canvas>
-    </div>
-</div>
-<!-- Weight Progress Chart -->
-<div class="dashboard-card mb-4">
-    <h5><i class="fas fa-weight-hanging me-2"></i>Weight Progress Comparison</h5>
-    <div class="chart-container" style="position: relative; height: 400px;">
-        <canvas id="weightChart"></canvas>
-    </div>
-</div>
+    function showNotification(title, message, type) {
+        const notification = document.getElementById('notification');
+        const icon = notification.querySelector('.notification-icon i');
+        const titleEl = notification.querySelector('.notification-title');
+        const messageEl = notification.querySelector('.notification-message');
+        
+        // Set notification content
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        
+        // Set notification type
+        notification.className = 'notification ' + type;
+        
+        // Set icon based on type
+        if (type === 'success') {
+            icon.className = 'fas fa-check-circle';
+        } else if (type === 'error') {
+            icon.className = 'fas fa-exclamation-circle';
+        }
+        
+        // Show notification
+        notification.style.display = 'flex';
+        notification.classList.add('show');
+        
+        // Auto hide after 5 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 300); // Wait for the transition to complete
+        }, 5000);
+    }
+</script>
 
 <!-- Chart Initialization Script -->
 <script>
@@ -344,326 +1201,4 @@
         });
     });
 </script>
-<!-- Progress Summary -->
-<div class="dashboard-card mb-4">
-    <h5><i class="fas fa-chart-pie me-2"></i>Your Progress Summary</h5>
-    <div class="row text-center">
-        <div class="col-md-4">
-            <div class="health-insight">
-                <h6><i class="fas fa-calendar-check"></i> Total Records</h6>
-                <div class="bmi-value" style="font-size: 2.5rem;">{{ all_chart_data[user_username].dates|length }}</div>
-                <p class="text-muted mb-0">BMI entries logged</p>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="health-insight">
-                <h6><i class="fas fa-chart-line"></i> Latest BMI</h6>
-                <div class="bmi-value" style="font-size: 2.5rem;">{{ all_chart_data[user_username].bmi_values[-1] }}
-                </div>
-                <p class="text-muted mb-0">Current BMI value</p>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="health-insight">
-                <h6><i class="fas fa-weight"></i> Latest Weight</h6>
-                <div class="bmi-value" style="font-size: 2.5rem;">{{ all_chart_data[user_username].weights[-1] }}kg
-                </div>
-                <p class="text-muted mb-0">Current weight</p>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Progress Insights -->
-<div class="dashboard-card mb-4">
-    <h5><i class="fas fa-lightbulb me-2"></i>Progress Insights</h5>
-    <div class="health-insight">
-        {% if all_chart_data[user_username].dates|length > 1 %}
-        {% set bmi_change = all_chart_data[user_username].bmi_values[-1] - all_chart_data[user_username].bmi_values[0]
-        %}
-        {% set weight_change = all_chart_data[user_username].weights[-1] - all_chart_data[user_username].weights[0] %}
-        <div class="row">
-            <div class="col-md-6">
-                <h6><i class="fas fa-trending-up"></i> BMI Trend</h6>
-                {% if bmi_change > 0 %}
-                <p class="mb-0"><span class="text-danger">+{{ bmi_change|round(1) }}</span> increase since first record
-                </p>
-                {% elif bmi_change < 0 %} <p class="mb-0"><span class="text-success">{{ bmi_change|round(1) }}</span>
-                    decrease since first record</p>
-                    {% else %}
-                    <p class="mb-0"><span class="text-info">No change</span> in BMI since first record</p>
-                    {% endif %}
-            </div>
-            <div class="col-md-6">
-                <h6><i class="fas fa-weight-hanging"></i> Weight Trend</h6>
-                {% if weight_change > 0 %}
-                <p class="mb-0"><span class="text-danger">+{{ weight_change|round(1) }}kg</span> gain since first record
-                </p>
-                {% elif weight_change < 0 %} <p class="mb-0"><span class="text-success">{{ weight_change|round(1)
-                        }}kg</span> loss since first record</p>
-                    {% else %}
-                    <p class="mb-0"><span class="text-info">No change</span> in weight since first record</p>
-                    {% endif %}
-            </div>
-        </div>
-        {% else %}
-        <p class="mb-0">Add more BMI records to see progress trends and insights.</p>
-        {% endif %}
-    </div>
-</div>
-<!-- Quick Actions -->
-<div class="dashboard-card">
-    <h5><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <div class="health-insight h-100">
-                <h6><i class="fas fa-plus-circle"></i> Add New Record</h6>
-                <p class="mb-3">Log your current weight and height</p>
-                <a href="{{ url_for('calculator') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-calculator"></i> Calculate BMI
-                </a>
-            </div>
-        </div>
-        <div class="col-md-6 mb-3">
-            <div class="health-insight h-100">
-                <h6><i class="fas fa-utensils"></i> Update Meal Plan</h6>
-                <p class="mb-3">Generate a new personalized meal plan</p>
-                <a href="{{ url_for('meal_plan') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-calendar-week"></i> View Meal Plan
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-{% else %}
-<!-- No Data Available -->
-<div class="dashboard-card text-center">
-    <div class="health-insight">
-        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
-        <h5><i class="fas fa-exclamation-triangle"></i> No Progress Data</h5>
-        <p class="mb-4">Start tracking your BMI to see your progress over time!</p>
-        <div class="btn-group justify-content-center">
-            <a href="{{ url_for('calculator') }}" class="btn btn-primary">
-                <i class="fas fa-calculator"></i> Calculate BMI
-            </a>
-            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
-                <i class="fas fa-home"></i> Dashboard
-            </a>
-        </div>
-    </div>
-</div>
-{% endif %}
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const allChartData = JSON.parse('{{ all_chart_data | tojson | safe }}');
-        const userUsername = '{{ user_username }}';
-
-        // Generate random colors for each user
-        const colors = {
-            [userUsername]: '#667eea'  // User's color is always blue
-        };
-
-        Object.keys(allChartData).forEach(username => {
-            if (username !== userUsername) {
-                // Generate a random color for each friend
-                const hue = Math.random() * 360;
-                colors[username] = `hsl(${hue}, 70%, 60%)`;
-            }
-        }); if (chartData.dates.length > 0) {
-            // Get theme mode for chart styling
-            const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-            
-            // Chart configuration
-            const chartOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.9)' : 'rgba(0, 0, 0, 0.8)',
-                        titleColor: isDarkMode ? '#f8fafc' : 'white',
-                        bodyColor: isDarkMode ? '#e2e8f0' : 'white',
-                        borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)',
-                        borderWidth: 1,
-                        cornerRadius: 8,
-                        displayColors: false,
-                        titleFont: {
-                            size: 14,
-                            weight: 'bold'
-                        },
-                        bodyFont: {
-                            size: 13
-                        },
-                        padding: 12
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: false,
-                        grid: {
-                            color: isDarkMode ? 'grey' : 'darkgrey',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: isDarkMode ? '#cbd5e1' : '#4a5568',
-                            font: {
-                                size: 12,
-                                weight: '500'
-                            },
-                            padding: 10
-                        },
-                        title: {
-                            display: true,
-                            text: 'BMI Value',
-                            color: isDarkMode ? '#f8fafc' : '#32325d',
-                            font: {
-                                size: 14,
-                                weight: 'bold'
-                            },
-                            padding: {top: 10, bottom: 10}
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: isDarkMode ? 'grey' : 'darkgrey',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: isDarkMode ? '#cbd5e1' : '#4a5568',
-                            font: {
-                                size: 12,
-                                weight: '500'
-                            },
-                            padding: 10,
-                            maxRotation: 45,
-                            minRotation: 45
-                        }
-                    }
-                },
-                elements: {
-                    point: {
-                        radius: 6,
-                        hoverRadius: 8,
-                        borderWidth: 2,
-                        hoverBorderWidth: 3
-                    },
-                    line: {
-                        borderWidth: 3,
-                        tension: 0.4
-                    }
-                }
-            };
-
-            // BMI Chart
-            const bmiCtx = document.getElementById('bmiChart').getContext('2d');
-            new Chart(bmiCtx, {
-                type: 'line',
-                data: {
-                    labels: chartData.dates,
-                    datasets: [{
-                        label: 'BMI',
-                        data: chartData.bmi_values,
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: '#667eea',
-                        pointBorderColor: isDarkMode ? '#0f172a' : '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 6,
-                        pointHoverRadius: 8
-                    }]
-                },
-                options: {
-                    ...chartOptions,
-                    scales: {
-                        ...chartOptions.scales,
-                        y: {
-                            ...chartOptions.scales.y,
-                            title: {
-                                ...chartOptions.scales.y.title,
-                                text: 'BMI Value'
-                            }
-                        }
-                    }
-                }
-            });
-
-            // Weight Chart
-            const weightCtx = document.getElementById('weightChart').getContext('2d');
-            new Chart(weightCtx, {
-                type: 'line',
-                data: {
-                    labels: chartData.dates,
-                    datasets: [{
-                        label: 'Weight (kg)',
-                        data: chartData.weights,
-                        borderColor: '#f093fb',
-                        backgroundColor: 'rgba(240, 147, 251, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: '#f093fb',
-                        pointBorderColor: isDarkMode ? '#0f172a' : '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 6,
-                        pointHoverRadius: 8
-                    }]
-                },
-                options: {
-                    ...chartOptions,
-                    scales: {
-                        ...chartOptions.scales,
-                        y: {
-                            ...chartOptions.scales.y,
-                            title: {
-                                ...chartOptions.scales.y.title,
-                                text: 'Weight (kg)'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    });
-</script>
-<style>
-    /* Progress-specific styles */
-    .chart-container {
-        background: var(--card-bg);
-        border-radius: 12px;
-        padding: 1rem;
-        border: 1px solid var(--border-color);
-    }
-
-    .health-insight h6 {
-        color: var(--primary-color);
-        font-weight: 600;
-    }
-
-    .text-danger {
-        color: var(--danger-color) !important;
-    }
-
-    .text-success {
-        color: var(--success-color) !important;
-    }
-
-    .text-info {
-        color: var(--primary-color) !important;
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .chart-container {
-            height: 300px !important;
-        }
-
-        .bmi-value {
-            font-size: 2rem !important;
-        }
-    }
-</style>
 {% endblock %}
