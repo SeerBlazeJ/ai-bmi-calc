@@ -154,7 +154,7 @@
                     <li class="shopping-item" data-plan-id="{{ plan_id }}" data-item-key="shopping_{{ loop.index }}">
                         <input type="checkbox" 
                                class="shopping-checkbox" 
-                               {% if completed_shopping_items and completed_shopping_items.get('shopping_' + loop.index|string) %}checked{% endif %}>
+                               {% if completed_items.get('shopping_' + loop.index|string) %}checked{% endif %}>
                         <span class="shopping-text">{{ item }}</span>
                     </li>
                     {% endfor %}
@@ -503,6 +503,44 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 shoppingItem.classList.remove('checked');
             }
+
+            const planId = shoppingItem.dataset.planId;
+            const itemKey = shoppingItem.dataset.itemKey;
+
+            // Send AJAX request to toggle completion status
+            fetch('/toggle_shopping_item', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    plan_id: planId,
+                    item_key: itemKey
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    // Revert checkbox if update failed
+                    this.checked = !this.checked;
+                    if (this.checked) {
+                        shoppingItem.classList.add('checked');
+                    } else {
+                        shoppingItem.classList.remove('checked');
+                    }
+                    console.error('Failed to update shopping item status');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating shopping item:', error);
+                // Revert checkbox if error occurred
+                this.checked = !this.checked;
+                if (this.checked) {
+                    shoppingItem.classList.add('checked');
+                } else {
+                    shoppingItem.classList.remove('checked');
+                }
+            });
         });
     });
     
