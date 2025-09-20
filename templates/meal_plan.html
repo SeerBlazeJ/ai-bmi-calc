@@ -77,19 +77,29 @@
                         <p>{{ plan_data.focus }}</p>
                     </div>
                 </div>
+                
+                <div class="summary-card">
+                    <div class="summary-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h3>Duration</h3>
+                        <p>7 Days</p>
+                    </div>
+                </div>
             </div>
             
             <!-- Plan Rules -->
             <div class="plan-rules">
-                <h3>Plan Guidelines</h3>
+                <h3><i class="fas fa-clipboard-list"></i> Plan Guidelines</h3>
                 <ul>
                     {% for rule in plan_data.rules %}
-                    <li>{{ rule }}</li>
+                    <li><i class="fas fa-check-circle"></i> {{ rule }}</li>
                     {% endfor %}
                 </ul>
             </div>
             
-            <!-- Weekly Plan - Changed to 3 cards per row -->
+            <!-- Weekly Plan -->
             <div class="weekly-plan">
                 {% for day, meals in plan_data.week.items() %}
                 <div class="day-card">
@@ -99,44 +109,48 @@
                     
                     <div class="meals">
                         <div class="meal-section">
-                            <h4>Breakfast</h4>
+                            <h4><i class="fas fa-sun"></i> Breakfast</h4>
                             <div class="meal-item" data-plan-id="{{ plan_id }}" data-item-key="{{ day }}_breakfast">
                                 <input type="checkbox" 
                                        class="meal-checkbox" 
+                                       id="{{ day }}_breakfast"
                                        {% if completed_items.get(day + '_breakfast') %}checked{% endif %}>
-                                <span>{{ meals.breakfast }}</span>
+                                <label for="{{ day }}_breakfast" class="meal-label">{{ meals.breakfast }}</label>
                             </div>
                         </div>
                         
                         <div class="meal-section">
-                            <h4>Lunch</h4>
+                            <h4><i class="fas fa-cloud-sun"></i> Lunch</h4>
                             <div class="meal-item" data-plan-id="{{ plan_id }}" data-item-key="{{ day }}_lunch">
                                 <input type="checkbox" 
                                        class="meal-checkbox" 
+                                       id="{{ day }}_lunch"
                                        {% if completed_items.get(day + '_lunch') %}checked{% endif %}>
-                                <span>{{ meals.lunch }}</span>
+                                <label for="{{ day }}_lunch" class="meal-label">{{ meals.lunch }}</label>
                             </div>
                         </div>
                         
                         <div class="meal-section">
-                            <h4>Dinner</h4>
+                            <h4><i class="fas fa-moon"></i> Dinner</h4>
                             <div class="meal-item" data-plan-id="{{ plan_id }}" data-item-key="{{ day }}_dinner">
                                 <input type="checkbox" 
                                        class="meal-checkbox" 
+                                       id="{{ day }}_dinner"
                                        {% if completed_items.get(day + '_dinner') %}checked{% endif %}>
-                                <span>{{ meals.dinner }}</span>
+                                <label for="{{ day }}_dinner" class="meal-label">{{ meals.dinner }}</label>
                             </div>
                         </div>
                         
                         <div class="meal-section">
-                            <h4>Snacks</h4>
+                            <h4><i class="fas fa-cookie-bite"></i> Snacks</h4>
                             <div class="snacks-list">
                                 {% for snack in meals.snacks %}
                                 <div class="meal-item" data-plan-id="{{ plan_id }}" data-item-key="{{ day }}_snack_{{ loop.index }}">
                                     <input type="checkbox" 
                                            class="meal-checkbox" 
+                                           id="{{ day }}_snack_{{ loop.index }}"
                                            {% if completed_items.get(day + '_snack_' + loop.index|string) %}checked{% endif %}>
-                                    <span>{{ snack }}</span>
+                                    <label for="{{ day }}_snack_{{ loop.index }}" class="meal-label">{{ snack }}</label>
                                 </div>
                                 {% endfor %}
                             </div>
@@ -148,25 +162,34 @@
             
             <!-- Shopping List -->
             <div class="shopping-list">
-                <h3>Shopping List</h3>
-                <ul>
+                <h3><i class="fas fa-shopping-cart"></i> Shopping List</h3>
+                <div class="shopping-list-container">
                     {% for item in plan_data.shopping_list %}
-                    <li class="shopping-item" data-plan-id="{{ plan_id }}" data-item-key="shopping_{{ loop.index }}">
+                    <div class="shopping-item" data-plan-id="{{ plan_id }}" data-item-key="shopping_{{ loop.index }}">
                         <input type="checkbox" 
                                class="shopping-checkbox" 
+                               id="shopping_{{ loop.index }}"
                                {% if completed_items.get('shopping_' + loop.index|string) %}checked{% endif %}>
-                        <span class="shopping-text">{{ item }}</span>
-                    </li>
+                        <label for="shopping_{{ loop.index }}" class="shopping-label">{{ item }}</label>
+                    </div>
                     {% endfor %}
-                </ul>
+                </div>
+                <div class="shopping-actions">
+                    <button class="btn-clear-list" id="clearListBtn">
+                        <i class="fas fa-trash-alt"></i> Clear Completed
+                    </button>
+                    <button class="btn-print-list" id="printListBtn">
+                        <i class="fas fa-print"></i> Print List
+                    </button>
+                </div>
             </div>
             
             <!-- Additional Notes -->
             <div class="plan-notes">
-                <h3>Additional Notes</h3>
+                <h3><i class="fas fa-lightbulb"></i> Additional Notes</h3>
                 <ul>
                     {% for note in plan_data.notes %}
-                    <li>{{ note }}</li>
+                    <li><i class="fas fa-star"></i> {{ note }}</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -197,14 +220,116 @@
     </div>
     
     <!-- Back Button -->
-    <div class="back-section">
-        <a href="{{ url_for('dashboard') }}" class="back-btn">
+    <div class="back-section" style="display:flex;justify-content:center;margin:2.5rem 0 0 0;">
+        <a href="{{ url_for('dashboard') }}" class="back-btn" style="box-shadow:0 4px 16px rgba(50,50,93,0.07);background:var(--card-bg);">
             <i class="fas fa-arrow-left"></i>
-            <span>Back to Dashboard</span>
+            <span style="font-weight:600;letter-spacing:0.5px;">Back to Dashboard</span>
         </a>
     </div>
 </div>
+
 <style>
+/* Enhanced CSS Variables */
+:root {
+    --primary-color: #5e72e4;
+    --secondary-color: #11cdef;
+    --success-color: #2dce89;
+    --warning-color: #fb6340;
+    --danger-color: #f5365c;
+    --text-primary: #32325d;
+    --text-secondary: #525f7f;
+    --text-tertiary: #8898aa;
+    --bg-primary: #f8f9fe;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f1f3f6;
+    --bg-quaternary: #e9ecef;
+    --card-bg: #ffffff;
+    --border-color: #e3e3e3;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+    --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.15);
+    --shadow-button: 0 4px 14px rgba(94, 114, 228, 0.3);
+    --shadow-button-hover: 0 6px 20px rgba(94, 114, 228, 0.4);
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #2dce89 0%, #2dcecc 100%);
+    --danger-gradient: linear-gradient(135deg, #f5365c 0%, #f56036 100%);
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
+}
+
+[data-theme="dark"] {
+    --text-primary: #ffffff;
+    --text-secondary: #c1c9d2;
+    --text-tertiary: #8b92a9;
+    --bg-primary: #0b0e17;
+    --bg-secondary: #151823;
+    --bg-tertiary: #1f2332;
+    --bg-quaternary: #2a2e3f;
+    --card-bg: #151823;
+    --border-color: #2a2e3f;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.3);
+    --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.4);
+}
+
+/* Meal Plan Container */
+.meal-plan-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    padding: 2rem 1rem;
+}
+
+.meal-plan-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Header Section */
+.meal-plan-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.header-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--primary-gradient);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    box-shadow: var(--shadow-lg);
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.header-content h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem;
+}
+
+.header-content p {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
 /* Navigation Buttons */
 .navigation-buttons {
     display: flex;
@@ -213,6 +338,7 @@
     margin-bottom: 2rem;
     flex-wrap: wrap;
 }
+
 .nav-btn {
     display: flex;
     flex-direction: column;
@@ -228,6 +354,7 @@
     width: 100px;
     box-shadow: var(--shadow-sm);
 }
+
 .nav-btn:hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow-md);
@@ -235,16 +362,466 @@
     color: var(--primary-color);
     text-decoration: none;
 }
+
 .nav-btn i {
     font-size: 1.5rem;
     margin-bottom: 0.5rem;
     color: var(--primary-color);
 }
+
 .nav-btn span {
     font-size: 0.875rem;
     font-weight: 600;
     text-align: center;
 }
+
+/* Generate Plan Button */
+.generate-plan-section {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.btn-generate {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-smooth);
+    box-shadow: var(--shadow-button);
+}
+
+.btn-generate:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-button-hover);
+}
+
+/* Loading Animation styles are now in global styles.css */
+
+/* Meal Plan Content */
+.meal-plan-content {
+    margin-bottom: 3rem;
+}
+
+/* Plan Summary */
+.plan-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    transition: all 0.3s var(--ease-smooth);
+}
+
+.summary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-2xl);
+}
+
+.summary-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.summary-card:nth-child(1) .summary-icon {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.summary-card:nth-child(2) .summary-icon {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.summary-card:nth-child(3) .summary-icon {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.summary-content h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem;
+}
+
+.summary-content p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Plan Rules */
+.plan-rules {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-color);
+}
+
+.plan-rules h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.plan-rules h3 i {
+    color: var(--primary-color);
+}
+
+.plan-rules ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.plan-rules li {
+    position: relative;
+    padding-left: 2rem;
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.plan-rules li i {
+    color: var(--success-color);
+    flex-shrink: 0;
+    font-size: 1.2rem;
+}
+
+.plan-rules li:last-child {
+    margin-bottom: 0;
+}
+
+/* Weekly Plan */
+.weekly-plan {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.day-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    transition: all 0.3s var(--ease-smooth);
+}
+
+.day-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-2xl);
+}
+
+.day-header {
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.day-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.meals {
+    padding: 1.5rem;
+}
+
+.meal-section {
+    margin-bottom: 1.5rem;
+}
+
+.meal-section:last-child {
+    margin-bottom: 0;
+}
+
+.meal-section h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.meal-section h4 i {
+    color: var(--primary-color);
+}
+
+.meal-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    transition: all 0.3s var(--ease-smooth);
+    border: 1px solid var(--border-color);
+}
+
+.meal-item:hover {
+    background: var(--bg-tertiary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.meal-checkbox {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.meal-label {
+    flex: 1;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s var(--ease-smooth);
+}
+
+.meal-item.checked .meal-label {
+    text-decoration: line-through;
+    color: var(--text-tertiary);
+}
+
+.snacks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Shopping List */
+.shopping-list {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-color);
+}
+
+.shopping-list h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.shopping-list h3 i {
+    color: var(--primary-color);
+}
+
+.shopping-list-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.shopping-item {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s var(--ease-smooth);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.shopping-item:hover {
+    background: var(--bg-tertiary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.shopping-checkbox {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.shopping-label {
+    flex: 1;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s var(--ease-smooth);
+}
+
+.shopping-item.checked .shopping-label {
+    text-decoration: line-through;
+    color: var(--text-tertiary);
+}
+
+.shopping-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.btn-clear-list, .btn-print-list {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-smooth);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-clear-list {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+.btn-print-list {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-clear-list:hover, .btn-print-list:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Additional Notes */
+.plan-notes {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-color);
+}
+
+.plan-notes h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.plan-notes h3 i {
+    color: var(--primary-color);
+}
+
+.plan-notes ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.plan-notes li {
+    position: relative;
+    padding-left: 2rem;
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.plan-notes li i {
+    color: var(--warning-color);
+    flex-shrink: 0;
+    font-size: 1.2rem;
+}
+
+.plan-notes li:last-child {
+    margin-bottom: 0;
+}
+
+/* No Plan Available */
+.no-plan {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 3rem;
+    text-align: center;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+}
+
+.no-plan-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--bg-secondary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    font-size: 2rem;
+    margin: 0 auto 1.5rem;
+}
+
+.no-plan h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.75rem;
+}
+
+.no-plan p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0 0 1.5rem;
+}
+
 /* Go to Up Button */
 .up-button-container {
     position: fixed;
@@ -252,6 +829,7 @@
     right: 2rem;
     z-index: 100;
 }
+
 .up-button {
     width: 50px;
     height: 50px;
@@ -267,20 +845,111 @@
     transition: all 0.3s var(--ease-smooth);
     font-size: 1.25rem;
 }
+
 .up-button:hover {
     transform: scale(1.1);
     box-shadow: var(--shadow-xl);
 }
-/* Dark mode adjustments */
+
+/* Back Button */
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.5rem;
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s var(--ease-smooth);
+    box-shadow: var(--shadow-sm);
+}
+
+.back-btn:hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateX(-5px);
+    text-decoration: none;
+    box-shadow: var(--shadow-md);
+}
+
+/* Dark Mode Adjustments */
 [data-theme="dark"] .nav-btn {
     background: var(--bg-tertiary);
     border-color: var(--border-color);
 }
+
 [data-theme="dark"] .nav-btn:hover {
     border-color: var(--primary-light);
 }
+
+[data-theme="dark"] .summary-card,
+[data-theme="dark"] .plan-rules,
+[data-theme="dark"] .shopping-list,
+[data-theme="dark"] .plan-notes,
+[data-theme="dark"] .no-plan,
+[data-theme="dark"] .day-card,
+[data-theme="dark"] .meal-item,
+[data-theme="dark"] .shopping-item {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .day-header {
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+}
+
+[data-theme="dark"] .meal-item,
+[data-theme="dark"] .shopping-item {
+    background: var(--bg-quaternary);
+}
+
+[data-theme="dark"] .meal-item:hover,
+[data-theme="dark"] .shopping-item:hover {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .no-plan-icon {
+    background: var(--bg-quaternary);
+    color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .loading-content {
+    background: var(--bg-tertiary);
+}
+
 /* Responsive adjustments */
+@media (max-width: 1200px) {
+    .weekly-plan {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .plan-summary {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 768px) {
+    .meal-plan-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .header-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+
+    .header-content h1 {
+        font-size: 2rem;
+    }
+
     .navigation-buttons {
         gap: 0.5rem;
     }
@@ -297,7 +966,15 @@
     .nav-btn span {
         font-size: 0.75rem;
     }
+
+    .weekly-plan {
+        grid-template-columns: 1fr;
+    }
     
+    .shopping-list-container {
+        grid-template-columns: 1fr;
+    }
+
     .up-button-container {
         bottom: 1rem;
         right: 1rem;
@@ -309,38 +986,8 @@
         font-size: 1rem;
     }
 }
-/* Shopping List Styles */
-.shopping-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0;
-}
-.shopping-item .shopping-text {
-    transition: all 0.3s ease;
-}
-.shopping-item.checked .shopping-text {
-    text-decoration: line-through;
-    color: #888;
-}
-/* Weekly Plan - Changed to 3 cards per row */
-.weekly-plan {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
-    margin-bottom: 3rem;
-}
-@media (max-width: 1200px) {
-    .weekly-plan {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-@media (max-width: 768px) {
-    .weekly-plan {
-        grid-template-columns: 1fr;
-    }
-}
 </style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Loading messages to cycle through
@@ -361,12 +1008,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const generateBtn = document.getElementById('generateBtn');
         const generateBtnNoPlan = document.getElementById('generateBtnNoPlan');
         
-        // Show loading container
         if (loadingContainer) {
             loadingContainer.style.display = 'block';
         }
         
-        // Disable buttons
         if (generateBtn) {
             generateBtn.disabled = true;
             generateBtn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i><span>Generating...</span>';
@@ -376,7 +1021,6 @@ document.addEventListener('DOMContentLoaded', function() {
             generateBtnNoPlan.innerHTML = '<i class="fas fa-magic fa-spin"></i><span>Generating...</span>';
         }
         
-        // Start cycling through loading messages
         const loadingMessageElement = document.getElementById('loadingMessage');
         if (loadingMessageElement) {
             currentMessageIndex = 0;
@@ -385,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', function() {
             messageInterval = setInterval(() => {
                 currentMessageIndex = (currentMessageIndex + 1) % loadingMessages.length;
                 loadingMessageElement.textContent = loadingMessages[currentMessageIndex];
-            }, 2000); // Change message every 2 seconds
+            }, 2000);
         }
     }
     
@@ -395,12 +1039,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const generateBtn = document.getElementById('generateBtn');
         const generateBtnNoPlan = document.getElementById('generateBtnNoPlan');
         
-        // Hide loading container
         if (loadingContainer) {
             loadingContainer.style.display = 'none';
         }
         
-        // Re-enable buttons
         if (generateBtn) {
             generateBtn.disabled = false;
             generateBtn.innerHTML = '<i class="fas fa-sync-alt"></i><span>Generate New Plan</span>';
@@ -410,19 +1052,16 @@ document.addEventListener('DOMContentLoaded', function() {
             generateBtnNoPlan.innerHTML = '<i class="fas fa-magic"></i><span>Generate My Plan</span>';
         }
         
-        // Stop message cycling
         if (messageInterval) {
             clearInterval(messageInterval);
         }
     }
     
-    // Check if we were redirected after generation (to avoid double loading)
+    // Check if we were redirected after generation
     const urlParams = new URLSearchParams(window.location.search);
     const justGenerated = urlParams.has('generated');
     
-    // Only show loading animation if not just generated from dashboard
     if (!justGenerated) {
-        // Handle form submissions for meal plan generation
         const forms = document.querySelectorAll('form[action*="generate_new_plan"]');
         forms.forEach(form => {
             form.addEventListener('submit', function(e) {
@@ -434,10 +1073,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: new FormData(this)
                 })
                 .then(response => {
-                    // Hide loading animation
                     hideLoading();
-                    
-                    // Reload the page with a parameter to indicate we just generated
                     window.location.href = '/meal_plan?generated=true';
                 })
                 .catch(error => {
@@ -451,107 +1087,161 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle meal item checkboxes
     const mealCheckboxes = document.querySelectorAll('.meal-checkbox');
-    
     mealCheckboxes.forEach(checkbox => {
+        const mealItem = checkbox.closest('.meal-item');
+        if (checkbox.checked) {
+            mealItem.classList.add('checked');
+        }
+        
         checkbox.addEventListener('change', function() {
             const mealItem = this.closest('.meal-item');
+            if (this.checked) {
+                mealItem.classList.add('checked');
+            } else {
+                mealItem.classList.remove('checked');
+            }
+            
             const planId = mealItem.dataset.planId;
             const itemKey = mealItem.dataset.itemKey;
             
-            // Send AJAX request to toggle completion status
             fetch('/toggle_meal_item', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    plan_id: planId,
-                    item_key: itemKey
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan_id: planId, item_key: itemKey })
             })
             .then(response => response.json())
             .then(data => {
                 if (!data.success) {
-                    // Revert checkbox if update failed
                     this.checked = !this.checked;
+                    mealItem.classList.toggle('checked');
                     console.error('Failed to update meal item status');
                 }
             })
             .catch(error => {
                 console.error('Error updating meal item:', error);
-                // Revert checkbox if error occurred
                 this.checked = !this.checked;
+                mealItem.classList.toggle('checked');
             });
         });
     });
     
-    // Initialize and handle shopping list checkboxes
+    // Handle shopping list checkboxes
     const shoppingCheckboxes = document.querySelectorAll('.shopping-checkbox');
-    
     shoppingCheckboxes.forEach(checkbox => {
-        // Initialize visual state
         const shoppingItem = checkbox.closest('.shopping-item');
         if (checkbox.checked) {
             shoppingItem.classList.add('checked');
         }
         
-        // Add change event listener
         checkbox.addEventListener('change', function() {
             const shoppingItem = this.closest('.shopping-item');
-            if (this.checked) {
-                shoppingItem.classList.add('checked');
-            } else {
-                shoppingItem.classList.remove('checked');
-            }
+            shoppingItem.classList.toggle('checked');
 
             const planId = shoppingItem.dataset.planId;
             const itemKey = shoppingItem.dataset.itemKey;
 
-            // Send AJAX request to toggle completion status
             fetch('/toggle_shopping_item', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    plan_id: planId,
-                    item_key: itemKey
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan_id: planId, item_key: itemKey })
             })
             .then(response => response.json())
             .then(data => {
                 if (!data.success) {
-                    // Revert checkbox if update failed
                     this.checked = !this.checked;
-                    if (this.checked) {
-                        shoppingItem.classList.add('checked');
-                    } else {
-                        shoppingItem.classList.remove('checked');
-                    }
+                    shoppingItem.classList.toggle('checked');
                     console.error('Failed to update shopping item status');
                 }
             })
             .catch(error => {
                 console.error('Error updating shopping item:', error);
-                // Revert checkbox if error occurred
                 this.checked = !this.checked;
-                if (this.checked) {
-                    shoppingItem.classList.add('checked');
-                } else {
-                    shoppingItem.classList.remove('checked');
-                }
+                shoppingItem.classList.toggle('checked');
             });
         });
     });
+    
+    // Clear completed shopping items
+    const clearListBtn = document.getElementById('clearListBtn');
+    if (clearListBtn) {
+        clearListBtn.addEventListener('click', function() {
+            const completedItems = document.querySelectorAll('.shopping-item.checked');
+            if (completedItems.length === 0) {
+                alert('No completed items to clear');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to remove ${completedItems.length} completed items?`)) {
+                const planId = completedItems[0].dataset.planId;
+                const itemKeys = Array.from(completedItems).map(item => item.dataset.itemKey);
+                
+                fetch('/clear_completed_shopping_items', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan_id: planId, item_keys: itemKeys })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        completedItems.forEach(item => {
+                            item.style.transition = 'all 0.3s ease';
+                            item.style.opacity = '0';
+                            item.style.transform = 'translateX(20px)';
+                            setTimeout(() => item.remove(), 300);
+                        });
+                    } else {
+                        alert('Failed to clear completed items. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error clearing completed items:', error);
+                    alert('An error occurred while clearing completed items.');
+                });
+            }
+        });
+    }
+    
+    // Print shopping list
+    const printListBtn = document.getElementById('printListBtn');
+    if (printListBtn) {
+        printListBtn.addEventListener('click', function() {
+            const printWindow = window.open('', '_blank');
+            const shoppingItems = document.querySelectorAll('.shopping-item');
+            
+            let printContent = `
+                <!DOCTYPE html><html><head><title>Shopping List</title><style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+                    h1 { color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+                    ul { list-style-type: none; padding: 0; }
+                    li { padding: 8px 0; border-bottom: 1px solid #eee; }
+                    .completed { text-decoration: line-through; color: #999; }
+                    .print-date { text-align: right; color: #666; font-size: 0.9em; margin-top: 20px; }
+                </style></head><body><h1>Shopping List</h1><ul>
+            `;
+            
+            shoppingItems.forEach(item => {
+                const label = item.querySelector('.shopping-label').textContent;
+                const isChecked = item.querySelector('.shopping-checkbox').checked;
+                printContent += `<li class="${isChecked ? 'completed' : ''}">${label}</li>`;
+            });
+            
+            printContent += `</ul><div class="print-date">Printed on ${new Date().toLocaleDateString()}</div></body></html>`;
+            
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+        });
+    }
     
     // Go to up button functionality
     const upButton = document.getElementById('upButton');
     if (upButton) {
         upButton.addEventListener('click', function() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }
 });
