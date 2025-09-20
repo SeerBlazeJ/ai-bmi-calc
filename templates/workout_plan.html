@@ -14,17 +14,17 @@
             </div>
         </div>
         
-        <!-- Navigation Buttons -->
-        <div class="navigation-buttons">
-            <a href="{{ url_for('calculator') }}" class="nav-btn">
+        <!-- Navigation Pills (from preferences.html) -->
+        <div class="navigation-pills">
+            <a href="{{ url_for('calculator') }}" class="nav-pill">
                 <i class="fas fa-calculator"></i>
                 <span>BMI Calc</span>
             </a>
-            <a href="{{ url_for('meal_plan') }}" class="nav-btn">
+            <a href="{{ url_for('meal_plan') }}" class="nav-pill">
                 <i class="fas fa-utensils"></i>
                 <span>Meal Plan</span>
             </a>
-            <a href="{{ url_for('preferences') }}" class="nav-btn">
+            <a href="{{ url_for('preferences') }}" class="nav-pill">
                 <i class="fas fa-cog"></i>
                 <span>Preferences</span>
             </a>
@@ -163,10 +163,10 @@
     </div>
     
     <!-- Back Button -->
-    <div class="back-section">
-        <a href="{{ url_for('dashboard') }}" class="back-btn">
+    <div class="back-section" style="display:flex;justify-content:center;margin:2.5rem 0 0 0;">
+        <a href="{{ url_for('dashboard') }}" class="back-btn" style="box-shadow:0 4px 16px rgba(50,50,93,0.07);background:var(--card-bg);">
             <i class="fas fa-arrow-left"></i>
-            <span>Back to Dashboard</span>
+            <span style="font-weight:600;letter-spacing:0.5px;">Back to Dashboard</span>
         </a>
     </div>
 </div>
