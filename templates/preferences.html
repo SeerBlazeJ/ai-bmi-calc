@@ -1,3 +1,74 @@
+<style>
+.navigation-pills {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+.nav-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 2.2rem 1.2rem 2.2rem;
+    background: var(--card-bg);
+    border-radius: 0.5rem; /* Less curved corners */
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: all 0.3s var(--ease-smooth);
+    border: 2px solid var(--border-color);
+    width: 160px;
+    min-height: 140px;
+    box-shadow: var(--shadow-sm);
+    font-weight: 600;
+    position: relative;
+    font-size: 1.1rem;
+}
+.nav-pill.active, .nav-pill:focus, .nav-pill:hover {
+    background: var(--primary-gradient);
+    color: #fff;
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-md);
+    text-decoration: none;
+    border-radius: 0.5rem; /* Consistent less curved corners */
+}
+.nav-pill i {
+    font-size: 2.2rem;
+    margin-bottom: 0.7rem;
+    color: var(--primary-color);
+    transition: color 0.3s;
+}
+.nav-pill.active i, .nav-pill:focus i, .nav-pill:hover i {
+    color: #fff;
+}
+.nav-pill span {
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.2px;
+}
+@media (max-width: 768px) {
+    .navigation-pills {
+        gap: 0.5rem;
+    }
+    .nav-pill {
+        width: 100px;
+        min-height: 90px;
+        padding: 1rem 0.5rem 0.8rem 0.5rem;
+        border-radius: 0.375rem; /* Consistent less curved corners for mobile */
+    }
+    .nav-pill.active, .nav-pill:focus, .nav-pill:hover {
+        border-radius: 0.375rem; /* Consistent less curved corners for mobile */
+    }
+    .nav-pill i {
+        font-size: 1.25rem;
+    }
+    .nav-pill span {
+        font-size: 0.85rem;
+    }
+}
+</style>
 {% extends "base.html" %}
 {% block header %}Health Preferences{% endblock %}
 {% block content %}
@@ -13,17 +84,18 @@
                 <p>Customize your nutrition journey</p>
             </div>
         </div>
-        <!-- Navigation Buttons -->
-        <div class="navigation-buttons">
-            <a href="/calculator" class="nav-btn">
-                <i class="fas fa-calculator"> </i>
-                <span style="text-decoration: none;">BMI Calc</span>
+        
+        <!-- Navigation Pills -->
+        <div class="navigation-pills">
+            <a href="/calculator" class="nav-pill">
+                <i class="fas fa-calculator"></i>
+                <span>BMI Calc</span>
             </a>
-            <a href="/workout_plan" class="nav-btn">
+            <a href="/workout_plan" class="nav-pill">
                 <i class="fas fa-dumbbell"></i>
                 <span>Workout Plan</span>
             </a>
-            <a href="/meal_plan" class="nav-btn">
+            <a href="/meal_plan" class="nav-pill active">
                 <i class="fas fa-utensils"></i>
                 <span>Meal Plan</span>
             </a>
@@ -33,22 +105,20 @@
         <form method="post" class="preferences-form" id="preferencesForm">
             <div class="form-grid">
                 <!-- Gender Card -->
-                <div class="preference-card gender-card">
-                    <div class="card-icon">
-                        <i class="fas fa-venus-mars"></i>
+                <div class="preference-card">
+                    <div class="card-header">
+                        <div class="card-icon gender-icon">
+                            <i class="fas fa-venus-mars"></i>
+                        </div>
+                        <h3>Gender (Optional)</h3>
                     </div>
                     <div class="card-content">
-                        <h3>Gender (Optional)</h3>
                         <div class="custom-select-wrapper">
                             <select name="gender" id="gender" class="custom-select">
-                                <option value="" {% if not preferences or not preferences.gender %}selected{% endif %}>
-                                    Prefer not to say</option>
-                                <option value="male" {% if preferences and preferences.gender=='male' %}selected{% endif
-                                    %}>Male</option>
-                                <option value="female" {% if preferences and preferences.gender=='female' %}selected{%
-                                    endif %}>Female</option>
-                                <option value="other" {% if preferences and preferences.gender=='other' %}selected{%
-                                    endif %}>Other</option>
+                                <option value="" {% if not preferences or not preferences.gender %}selected{% endif %}>Prefer not to say</option>
+                                <option value="male" {% if preferences and preferences.gender=='male' %}selected{% endif %}>Male</option>
+                                <option value="female" {% if preferences and preferences.gender=='female' %}selected{% endif %}>Female</option>
+                                <option value="other" {% if preferences and preferences.gender=='other' %}selected{% endif %}>Other</option>
                             </select>
                             <div class="select-arrow">
                                 <i class="fas fa-chevron-down"></i>
@@ -58,12 +128,14 @@
                 </div>
 
                 <!-- Age Card -->
-                <div class="preference-card age-card">
-                    <div class="card-icon">
-                        <i class="fas fa-birthday-cake"></i>
+                <div class="preference-card">
+                    <div class="card-header">
+                        <div class="card-icon age-icon">
+                            <i class="fas fa-birthday-cake"></i>
+                        </div>
+                        <h3>Age (Optional)</h3>
                     </div>
                     <div class="card-content">
-                        <h3>Age (Optional)</h3>
                         <div class="input-wrapper">
                             <input type="number" name="age" id="age" min="0" max="120" class="fancy-input"
                                 placeholder="Enter your age"
@@ -76,27 +148,22 @@
                 </div>
 
                 <!-- Activity Level Card -->
-                <div class="preference-card activity-card">
-                    <div class="card-icon">
-                        <i class="fas fa-running"></i>
+                <div class="preference-card">
+                    <div class="card-header">
+                        <div class="card-icon activity-icon">
+                            <i class="fas fa-running"></i>
+                        </div>
+                        <h3>Activity Level (Optional)</h3>
                     </div>
                     <div class="card-content">
-                        <h3>Activity Level (Optional)</h3>
                         <div class="custom-select-wrapper">
                             <select name="activity_level" id="activity_level" class="custom-select">
-                                <option value="" {% if not preferences or not preferences.activity_level %}selected{%
-                                    endif %}>Not specified</option>
-                                <option value="sedentary" {% if preferences and preferences.activity_level=='sedentary'
-                                    %}selected{% endif %}>Sedentary (little or no exercise)</option>
-                                <option value="light" {% if preferences and preferences.activity_level=='light'
-                                    %}selected{% endif %}>Light (1-3 days/week)</option>
-                                <option value="moderate" {% if preferences and preferences.activity_level=='moderate'
-                                    %}selected{% endif %}>Moderate (3-5 days/week)</option>
-                                <option value="active" {% if preferences and preferences.activity_level=='active'
-                                    %}selected{% endif %}>Active (6-7 days/week)</option>
-                                <option value="very_active" {% if preferences and
-                                    preferences.activity_level=='very_active' %}selected{% endif %}>Very Active (hard
-                                    exercise & physical job)</option>
+                                <option value="" {% if not preferences or not preferences.activity_level %}selected{% endif %}>Not specified</option>
+                                <option value="sedentary" {% if preferences and preferences.activity_level=='sedentary' %}selected{% endif %}>Sedentary (little or no exercise)</option>
+                                <option value="light" {% if preferences and preferences.activity_level=='light' %}selected{% endif %}>Light (1-3 days/week)</option>
+                                <option value="moderate" {% if preferences and preferences.activity_level=='moderate' %}selected{% endif %}>Moderate (3-5 days/week)</option>
+                                <option value="active" {% if preferences and preferences.activity_level=='active' %}selected{% endif %}>Active (6-7 days/week)</option>
+                                <option value="very_active" {% if preferences and preferences.activity_level=='very_active' %}selected{% endif %}>Very Active (hard exercise & physical job)</option>
                             </select>
                             <div class="select-arrow">
                                 <i class="fas fa-chevron-down"></i>
@@ -106,55 +173,38 @@
                 </div>
 
                 <!-- Previous History Card -->
-                <div class="preference-card history-card">
-                    <div class="card-icon">
-                        <i class="fas fa-notes-medical"></i>
+                <div class="preference-card">
+                    <div class="card-header">
+                        <div class="card-icon history-icon">
+                            <i class="fas fa-notes-medical"></i>
+                        </div>
+                        <h3>Previous Health History (Optional)</h3>
                     </div>
                     <div class="card-content">
-                        <h3>Previous Health History (Optional)</h3>
                         <textarea name="previous_history" id="previous_history" class="fancy-input" rows="2"
                             placeholder="e.g., diabetes, hypertension, injuries, etc.">{% if preferences and preferences.previous_history %}{{ preferences.previous_history }}{% endif %}</textarea>
                     </div>
                 </div>
 
                 <!-- Dietary Preferences Card -->
-                <div class="preference-card dietary-card">
-                    <div class="card-icon">
-                        <i class="fas fa-leaf"></i>
+                <div class="preference-card">
+                    <div class="card-header">
+                        <div class="card-icon dietary-icon">
+                            <i class="fas fa-leaf"></i>
+                        </div>
+                        <h3>Dietary Preferences</h3>
                     </div>
                     <div class="card-content">
-                        <h3>Dietary Preferences</h3>
                         <div class="custom-select-wrapper">
                             <select name="dietary_preferences" id="dietary_preferences" class="custom-select">
                                 <option value="">No preference</option>
-                                <option value="vegetarian" {% if preferences and
-                                    preferences.dietary_preferences=='vegetarian' %}selected{% endif %}>
-                                    Vegetarian
-                                </option>
-                                <option value="vegan" {% if preferences and preferences.dietary_preferences=='vegan'
-                                    %}selected{% endif %}>
-                                    Vegan
-                                </option>
-                                <option value="keto" {% if preferences and preferences.dietary_preferences=='keto'
-                                    %}selected{% endif %}>
-                                    Keto
-                                </option>
-                                <option value="mediterranean" {% if preferences and
-                                    preferences.dietary_preferences=='mediterranean' %}selected{% endif %}>
-                                    Mediterranean
-                                </option>
-                                <option value="paleo" {% if preferences and preferences.dietary_preferences=='paleo'
-                                    %}selected{% endif %}>
-                                    Paleo
-                                </option>
-                                <option value="low_carb" {% if preferences and
-                                    preferences.dietary_preferences=='low_carb' %}selected{% endif %}>
-                                    Low Carb
-                                </option>
-                                <option value="gluten_free" {% if preferences and
-                                    preferences.dietary_preferences=='gluten_free' %}selected{% endif %}>
-                                    Gluten Free
-                                </option>
+                                <option value="vegetarian" {% if preferences and preferences.dietary_preferences=='vegetarian' %}selected{% endif %}>Vegetarian</option>
+                                <option value="vegan" {% if preferences and preferences.dietary_preferences=='vegan' %}selected{% endif %}>Vegan</option>
+                                <option value="keto" {% if preferences and preferences.dietary_preferences=='keto' %}selected{% endif %}>Keto</option>
+                                <option value="mediterranean" {% if preferences and preferences.dietary_preferences=='mediterranean' %}selected{% endif %}>Mediterranean</option>
+                                <option value="paleo" {% if preferences and preferences.dietary_preferences=='paleo' %}selected{% endif %}>Paleo</option>
+                                <option value="low_carb" {% if preferences and preferences.dietary_preferences=='low_carb' %}selected{% endif %}>Low Carb</option>
+                                <option value="gluten_free" {% if preferences and preferences.dietary_preferences=='gluten_free' %}selected{% endif %}>Gluten Free</option>
                             </select>
                             <div class="select-arrow">
                                 <i class="fas fa-chevron-down"></i>
@@ -164,12 +214,14 @@
                 </div>
 
                 <!-- Allergies Card -->
-                <div class="preference-card allergies-card">
-                    <div class="card-icon">
-                        <i class="fas fa-exclamation-triangle"></i>
+                <div class="preference-card">
+                    <div class="card-header">
+                        <div class="card-icon allergies-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h3>Food Allergies</h3>
                     </div>
                     <div class="card-content">
-                        <h3>Food Allergies</h3>
                         <div class="input-wrapper">
                             <input type="text" name="allergies" id="allergies"
                                 value="{% if preferences %}{{ preferences.allergies }}{% endif %}"
@@ -183,16 +235,17 @@
                 </div>
 
                 <!-- Health Goals Card -->
-                <div class="preference-card goals-card">
-                    <div class="card-icon">
-                        <i class="fas fa-bullseye"></i>
+                <div class="preference-card">
+                    <div class="card-header">
+                        <div class="card-icon goals-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <h3>Health Goals</h3>
                     </div>
                     <div class="card-content">
-                        <h3>Health Goals</h3>
                         <div class="goal-options">
                             <label class="goal-option">
-                                <input type="radio" name="goals" value="maintenance" {% if not preferences or
-                                    preferences.goals=='maintenance' %}checked{% endif %}>
+                                <input type="radio" name="goals" value="maintenance" {% if not preferences or preferences.goals=='maintenance' %}checked{% endif %}>
                                 <div class="goal-option-content">
                                     <i class="fas fa-balance-scale"></i>
                                     <span>Maintain Weight</span>
@@ -200,8 +253,7 @@
                             </label>
 
                             <label class="goal-option">
-                                <input type="radio" name="goals" value="weight_loss" {% if preferences and
-                                    preferences.goals=='weight_loss' %}checked{% endif %}>
+                                <input type="radio" name="goals" value="weight_loss" {% if preferences and preferences.goals=='weight_loss' %}checked{% endif %}>
                                 <div class="goal-option-content">
                                     <i class="fas fa-weight"></i>
                                     <span>Weight Loss</span>
@@ -209,8 +261,7 @@
                             </label>
 
                             <label class="goal-option">
-                                <input type="radio" name="goals" value="weight_gain" {% if preferences and
-                                    preferences.goals=='weight_gain' %}checked{% endif %}>
+                                <input type="radio" name="goals" value="weight_gain" {% if preferences and preferences.goals=='weight_gain' %}checked{% endif %}>
                                 <div class="goal-option-content">
                                     <i class="fas fa-arrow-up"></i>
                                     <span>Weight Gain</span>
@@ -218,8 +269,7 @@
                             </label>
 
                             <label class="goal-option">
-                                <input type="radio" name="goals" value="muscle_gain" {% if preferences and
-                                    preferences.goals=='muscle_gain' %}checked{% endif %}>
+                                <input type="radio" name="goals" value="muscle_gain" {% if preferences and preferences.goals=='muscle_gain' %}checked{% endif %}>
                                 <div class="goal-option-content">
                                     <i class="fas fa-dumbbell"></i>
                                     <span>Muscle Gain</span>
@@ -230,12 +280,14 @@
                 </div>
 
                 <!-- Target Weight Card -->
-                <div class="preference-card weight-card">
-                    <div class="card-icon">
-                        <i class="fas fa-crosshairs"></i>
+                <div class="preference-card">
+                    <div class="card-header">
+                        <div class="card-icon weight-icon">
+                            <i class="fas fa-crosshairs"></i>
+                        </div>
+                        <h3>Target Weight (Optional)</h3>
                     </div>
                     <div class="card-content">
-                        <h3>Target Weight (Optional)</h3>
                         <div class="weight-input-wrapper">
                             <input type="number" step="0.1" min="20" max="300" name="target_weight" id="target_weight"
                                 value="{% if preferences and preferences.target_weight %}{{ preferences.target_weight }}{% endif %}"
@@ -247,24 +299,20 @@
                 </div>
 
                 <!-- Additional Preferences Card -->
-                <div class="preference-card additional-card">
-                    <div class="card-icon">
-                        <i class="fas fa-plus-circle"></i>
+                <div class="preference-card">
+                    <div class="card-header">
+                        <div class="card-icon additional-icon">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <h3>Additional Preferences</h3>
                     </div>
                     <div class="card-content">
-                        <h3>Additional Preferences</h3>
                         <div class="custom-select-wrapper">
                             <select name="meal_frequency" id="meal_frequency" class="custom-select">
                                 <option value="">Standard (3 meals/day)</option>
-                                <option value="small_frequent" {% if preferences and
-                                    preferences.meal_frequency=='small_frequent' %}selected{% endif %}>Small & Frequent
-                                    (5-6 meals/day)</option>
-                                <option value="intermittent" {% if preferences and
-                                    preferences.meal_frequency=='intermittent' %}selected{% endif %}>Intermittent
-                                    Fasting</option>
-                                <option value="large_meals" {% if preferences and
-                                    preferences.meal_frequency=='large_meals' %}selected{% endif %}>Large Meals (2
-                                    meals/day)</option>
+                                <option value="small_frequent" {% if preferences and preferences.meal_frequency=='small_frequent' %}selected{% endif %}>Small & Frequent (5-6 meals/day)</option>
+                                <option value="intermittent" {% if preferences and preferences.meal_frequency=='intermittent' %}selected{% endif %}>Intermittent Fasting</option>
+                                <option value="large_meals" {% if preferences and preferences.meal_frequency=='large_meals' %}selected{% endif %}>Large Meals (2 meals/day)</option>
                             </select>
                             <div class="select-arrow">
                                 <i class="fas fa-chevron-down"></i>
@@ -273,24 +321,23 @@
                         <div class="input-wrapper mt-3">
                             <input type="text" name="prefered_cuisine" id="prefered_cuisine"
                                 value="{% if preferences and preferences.preferred_cuisines %}{{ preferences.preferred_cuisines }}{% endif %}"
-                                placeholder="Additional preferences (if any)" class="fancy-input" maxlength="200">
+                                placeholder="Preferred cuisines (if any)" class="fancy-input" maxlength="200">
                             <div class="input-icon">
                                 <i class="fas fa-globe"></i>
                             </div>
                         </div>
-                        <p class="input-help">Additional preferences may include any extra modifications that you
-                            want...</p>
+                        <p class="input-help">e.g., Italian, Mexican, Asian, etc.</p>
                     </div>
                 </div>
             </div>
 
             <!-- Action Buttons -->
-            <div class="form-actions">
-                <button type="submit" class="btn-primary">
+            <div class="form-actions" style="text-align:center;margin-top:2rem;">
+                <button type="submit" class="btn-generate" id="savePreferencesBtn">
                     <i class="fas fa-save"></i>
                     <span>Save Preferences</span>
                 </button>
-                <a href="{{ url_for('dashboard') }}" class="btn-secondary">
+                <a href="{{ url_for('dashboard') }}" class="btn-generate" style="background:var(--danger-gradient);margin-left:1rem;">
                     <i class="fas fa-times"></i>
                     <span>Cancel</span>
                 </a>
@@ -303,17 +350,16 @@
             <h2><i class="fas fa-clipboard-check"></i> Current Preferences</h2>
             <div class="preferences-summary">
                 <div class="summary-item">
-                    <div class="summary-icon">
+                    <div class="summary-icon gender-icon">
                         <i class="fas fa-venus-mars"></i>
                     </div>
                     <div class="summary-content">
                         <h4>Gender</h4>
-                        <p>{% if preferences.gender %}{{ preferences.gender|capitalize }}{% else %}Not specified{% endif
-                            %}</p>
+                        <p>{% if preferences.gender %}{{ preferences.gender|capitalize }}{% else %}Not specified{% endif %}</p>
                     </div>
                 </div>
                 <div class="summary-item">
-                    <div class="summary-icon">
+                    <div class="summary-icon age-icon">
                         <i class="fas fa-birthday-cake"></i>
                     </div>
                     <div class="summary-content">
@@ -322,38 +368,34 @@
                     </div>
                 </div>
                 <div class="summary-item">
-                    <div class="summary-icon">
+                    <div class="summary-icon activity-icon">
                         <i class="fas fa-running"></i>
                     </div>
                     <div class="summary-content">
                         <h4>Activity Level</h4>
-                        <p>{% if preferences.activity_level %}{{ preferences.activity_level.replace('_', '
-                            ').capitalize() }}{% else %}Not specified{% endif %}</p>
+                        <p>{% if preferences.activity_level %}{{ preferences.activity_level.replace('_', ' ').capitalize() }}{% else %}Not specified{% endif %}</p>
                     </div>
                 </div>
                 <div class="summary-item">
-                    <div class="summary-icon">
+                    <div class="summary-icon history-icon">
                         <i class="fas fa-notes-medical"></i>
                     </div>
                     <div class="summary-content">
                         <h4>History</h4>
-                        <p>{% if preferences.previous_history %}{{ preferences.previous_history }}{% else %}None
-                            specified{% endif %}</p>
+                        <p>{% if preferences.previous_history %}{{ preferences.previous_history }}{% else %}None specified{% endif %}</p>
                     </div>
                 </div>
                 <div class="summary-item">
-                    <div class="summary-icon">
+                    <div class="summary-icon dietary-icon">
                         <i class="fas fa-utensils"></i>
                     </div>
                     <div class="summary-content">
                         <h4>Dietary</h4>
-                        <p>{{ preferences.dietary_preferences.replace('_', ' ').title() if
-                            preferences.dietary_preferences else 'No preference' }}</p>
+                        <p>{{ preferences.dietary_preferences.replace('_', ' ').title() if preferences.dietary_preferences else 'No preference' }}</p>
                     </div>
                 </div>
-
                 <div class="summary-item">
-                    <div class="summary-icon">
+                    <div class="summary-icon allergies-icon">
                         <i class="fas fa-shield-virus"></i>
                     </div>
                     <div class="summary-content">
@@ -361,9 +403,8 @@
                         <p>{{ preferences.allergies if preferences.allergies else 'None specified' }}</p>
                     </div>
                 </div>
-
                 <div class="summary-item">
-                    <div class="summary-icon">
+                    <div class="summary-icon goals-icon">
                         <i class="fas fa-flag"></i>
                     </div>
                     <div class="summary-content">
@@ -371,20 +412,17 @@
                         <p>{{ preferences.goals.replace('_', ' ').title() if preferences.goals else 'Maintenance' }}</p>
                     </div>
                 </div>
-
                 <div class="summary-item">
-                    <div class="summary-icon">
+                    <div class="summary-icon weight-icon">
                         <i class="fas fa-bullseye"></i>
                     </div>
                     <div class="summary-content">
                         <h4>Target Weight</h4>
-                        <p>{{ preferences.target_weight if preferences.target_weight else 'Not set' }}{% if
-                            preferences.target_weight %} kg{% endif %}</p>
+                        <p>{{ preferences.target_weight if preferences.target_weight else 'Not set' }}{% if preferences.target_weight %} kg{% endif %}</p>
                     </div>
                 </div>
-
                 <div class="summary-item">
-                    <div class="summary-icon">
+                    <div class="summary-icon additional-icon">
                         <i class="fas fa-clock"></i>
                     </div>
                     <div class="summary-content">
@@ -402,18 +440,13 @@
                         </p>
                     </div>
                 </div>
-
                 <div class="summary-item">
-                    <div class="summary-icon">
+                    <div class="summary-icon additional-icon">
                         <i class="fas fa-globe"></i>
                     </div>
                     <div class="summary-content">
-                        <div class="summary-content">
-                            <h4>Preferred Cuisines</h4>
-                            <p>{{ preferences.prefered_cuisine if preferences.prefered_cuisine else 'No preference' }}
-                            </p>
-                        </div>
-                        </p>
+                        <h4>Preferred Cuisines</h4>
+                        <p>{{ preferences.prefered_cuisine if preferences.prefered_cuisine else 'No preference' }}</p>
                     </div>
                 </div>
             </div>
@@ -429,6 +462,7 @@
         </a>
     </div>
 </div>
+
 <style>
     /* Enhanced CSS Variables */
     :root {
@@ -454,6 +488,7 @@
         --shadow-button: 0 4px 14px rgba(94, 114, 228, 0.3);
         --shadow-button-hover: 0 6px 20px rgba(94, 114, 228, 0.4);
         --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --danger-gradient: linear-gradient(135deg, #f5365c 0%, #f56036 100%);
         --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
         --ease-out: cubic-bezier(0, 0, 0.2, 1);
     }
@@ -487,10 +522,6 @@
         margin: 0 auto;
     }
 
-    #prefered_cuisine::placeholder {
-        font-size: 12px;
-    }
-
     /* Header Section */
     .preferences-header {
         display: flex;
@@ -516,15 +547,8 @@
     }
 
     @keyframes float {
-
-        0%,
-        100% {
-            transform: translateY(0);
-        }
-
-        50% {
-            transform: translateY(-10px);
-        }
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
     }
 
     .header-content h1 {
@@ -540,6 +564,43 @@
         margin: 0;
     }
 
+    /* Navigation Pills */
+    .navigation-pills {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .nav-pill {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem; /* Less curved corners */
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .nav-pill:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .nav-pill.active {
+        background: var(--primary-gradient);
+        color: white;
+        border-color: transparent;
+        box-shadow: var(--shadow-button);
+    }
+
     /* Form Grid */
     .form-grid {
         display: grid;
@@ -552,28 +613,10 @@
     .preference-card {
         background: var(--card-bg);
         border-radius: 20px;
-        padding: 2rem;
         box-shadow: var(--shadow-xl);
         border: 1px solid var(--border-color);
         transition: all 0.3s var(--ease-smooth);
-        position: relative;
         overflow: hidden;
-    }
-
-    .preference-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: var(--primary-gradient);
-        transform: scaleX(0);
-        transition: transform 0.3s var(--ease-out);
-    }
-
-    .preference-card:hover::before {
-        transform: scaleX(1);
     }
 
     .preference-card:hover {
@@ -581,31 +624,45 @@
         box-shadow: var(--shadow-2xl);
     }
 
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    }
+
     .card-icon {
-        width: 60px;
-        height: 60px;
-        background: var(--bg-secondary);
-        border-radius: 15px;
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
-        color: var(--primary-color);
-        margin-bottom: 1.5rem;
-        transition: all 0.3s var(--ease-smooth);
-    }
-
-    .preference-card:hover .card-icon {
-        background: var(--primary-gradient);
+        font-size: 1.25rem;
         color: white;
-        transform: scale(1.1);
     }
 
-    .card-content h3 {
-        font-size: 1.3rem;
+    .gender-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .age-icon { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .activity-icon { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    .history-icon { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .dietary-icon { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+    .allergies-icon { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+    .goals-icon { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+    .weight-icon { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+    .additional-icon { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
+
+    .card-header h3 {
+        font-size: 1.1rem;
         font-weight: 600;
         color: var(--text-primary);
-        margin: 0 0 1.5rem;
+        margin: 0;
+    }
+
+    .card-content {
+        padding: 1.5rem;
     }
 
     /* Custom Select */
@@ -615,12 +672,12 @@
 
     .custom-select {
         width: 100%;
-        padding: 1rem 3rem 1rem 1rem;
+        padding: 0.875rem 2.5rem 0.875rem 1rem;
         border: 2px solid var(--border-color);
         border-radius: 12px;
         background: var(--bg-secondary);
         color: var(--text-primary);
-        font-size: 1rem;
+        font-size: 0.95rem;
         font-weight: 500;
         cursor: pointer;
         appearance: none;
@@ -647,7 +704,7 @@
         transition: all 0.3s var(--ease-smooth);
     }
 
-    .custom-select:hover+.select-arrow {
+    .custom-select:hover + .select-arrow {
         color: var(--primary-color);
     }
 
@@ -658,12 +715,12 @@
 
     .fancy-input {
         width: 100%;
-        padding: 1rem 1rem 1rem 3rem;
+        padding: 0.875rem 1rem 0.875rem 2.75rem;
         border: 2px solid var(--border-color);
         border-radius: 12px;
         background: var(--bg-secondary);
         color: var(--text-primary);
-        font-size: 1rem;
+        font-size: 0.95rem;
         font-weight: 500;
         transition: all 0.3s var(--ease-smooth);
     }
@@ -687,12 +744,12 @@
         transition: all 0.3s var(--ease-smooth);
     }
 
-    .fancy-input:focus+.input-icon {
+    .fancy-input:focus + .input-icon {
         color: var(--primary-color);
     }
 
     .input-help {
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         color: var(--text-tertiary);
         margin-top: 0.5rem;
     }
@@ -718,7 +775,7 @@
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        padding: 1rem;
+        padding: 0.875rem;
         border: 2px solid var(--border-color);
         border-radius: 12px;
         background: var(--bg-secondary);
@@ -726,18 +783,18 @@
     }
 
     .goal-option-content i {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         color: var(--text-secondary);
         transition: all 0.3s var(--ease-smooth);
     }
 
-    .goal-option input[type="radio"]:checked+.goal-option-content {
+    .goal-option input[type="radio"]:checked + .goal-option-content {
         border-color: var(--primary-color);
         background: var(--primary-gradient);
         color: white;
     }
 
-    .goal-option input[type="radio"]:checked+.goal-option-content i {
+    .goal-option input[type="radio"]:checked + .goal-option-content i {
         color: white;
     }
 
@@ -755,12 +812,12 @@
 
     .weight-input {
         flex: 1;
-        padding: 1rem 3rem 1rem 1rem;
+        padding: 0.875rem 3rem 0.875rem 1rem;
         border: 2px solid var(--border-color);
         border-radius: 12px;
         background: var(--bg-secondary);
         color: var(--text-primary);
-        font-size: 1rem;
+        font-size: 0.95rem;
         font-weight: 500;
         transition: all 0.3s var(--ease-smooth);
     }
@@ -792,9 +849,8 @@
         margin-top: 3rem;
     }
 
-    .btn-primary,
-    .btn-secondary {
-        display: flex;
+    .btn-generate {
+        display: inline-flex;
         align-items: center;
         gap: 0.75rem;
         padding: 1rem 2rem;
@@ -805,31 +861,14 @@
         transition: all 0.3s var(--ease-smooth);
         border: none;
         cursor: pointer;
-    }
-
-    .btn-primary {
         background: var(--primary-gradient);
         color: white;
         box-shadow: var(--shadow-button);
     }
 
-    .btn-primary:hover {
+    .btn-generate:hover {
         transform: translateY(-2px);
         box-shadow: var(--shadow-button-hover);
-    }
-
-    .btn-secondary {
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-        border: 2px solid var(--border-color);
-    }
-
-    .btn-secondary:hover {
-        background: var(--bg-tertiary);
-        border-color: var(--primary-color);
-        transform: translateY(-2px);
-        text-decoration: none;
-        color: var(--text-primary);
     }
 
     /* Current Preferences */
@@ -855,7 +894,6 @@
     .preferences-summary {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        /* Exactly 3 columns */
         gap: 1.5rem;
     }
 
@@ -877,7 +915,6 @@
     .summary-icon {
         width: 40px;
         height: 40px;
-        background: var(--primary-gradient);
         border-radius: 10px;
         display: flex;
         align-items: center;
@@ -913,7 +950,7 @@
         align-items: center;
         gap: 0.75rem;
         padding: 0.875rem 1.5rem;
-        background: transparent;
+        background: var(--card-bg);
         color: var(--text-secondary);
         border: 2px solid var(--border-color);
         border-radius: 12px;
@@ -921,6 +958,7 @@
         font-weight: 500;
         text-decoration: none;
         transition: all 0.3s var(--ease-smooth);
+        box-shadow: var(--shadow-sm);
     }
 
     .back-btn:hover {
@@ -929,6 +967,7 @@
         color: var(--primary-color);
         transform: translateX(-5px);
         text-decoration: none;
+        box-shadow: var(--shadow-md);
     }
 
     /* Dark Mode Enhancements */
@@ -938,7 +977,10 @@
         border-color: var(--border-color);
     }
 
-    [data-theme="dark"] .card-icon,
+    [data-theme="dark"] .card-header {
+        background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+    }
+
     [data-theme="dark"] .summary-item {
         background: var(--bg-quaternary);
     }
@@ -965,7 +1007,6 @@
     @media (max-width: 992px) {
         .preferences-summary {
             grid-template-columns: repeat(2, 1fr);
-            /* 2 columns on medium screens */
         }
     }
 
@@ -986,6 +1027,17 @@
             font-size: 2rem;
         }
 
+        .navigation-pills {
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .nav-pill {
+            padding: 0.625rem 1.25rem;
+            font-size: 0.9rem;
+            border-radius: 0.375rem; /* Consistent less curved corners for mobile */
+        }
+
         .form-grid {
             grid-template-columns: 1fr;
             gap: 1.5rem;
@@ -999,14 +1051,12 @@
             flex-direction: column;
         }
 
-        .btn-primary,
-        .btn-secondary {
+        .btn-generate {
             width: 100%;
         }
 
         .preferences-summary {
             grid-template-columns: 1fr;
-            /* 1 column on small screens */
         }
     }
 
@@ -1015,28 +1065,21 @@
         animation: slideUp 0.6s var(--ease-out) backwards;
     }
 
-    .preference-card:nth-child(1) {
-        animation-delay: 0.1s;
-    }
-
-    .preference-card:nth-child(2) {
-        animation-delay: 0.2s;
-    }
-
-    .preference-card:nth-child(3) {
-        animation-delay: 0.3s;
-    }
-
-    .preference-card:nth-child(4) {
-        animation-delay: 0.4s;
-    }
+    .preference-card:nth-child(1) { animation-delay: 0.1s; }
+    .preference-card:nth-child(2) { animation-delay: 0.2s; }
+    .preference-card:nth-child(3) { animation-delay: 0.3s; }
+    .preference-card:nth-child(4) { animation-delay: 0.4s; }
+    .preference-card:nth-child(5) { animation-delay: 0.5s; }
+    .preference-card:nth-child(6) { animation-delay: 0.6s; }
+    .preference-card:nth-child(7) { animation-delay: 0.7s; }
+    .preference-card:nth-child(8) { animation-delay: 0.8s; }
+    .preference-card:nth-child(9) { animation-delay: 0.9s; }
 
     @keyframes slideUp {
         from {
             opacity: 0;
             transform: translateY(30px);
         }
-
         to {
             opacity: 1;
             transform: translateY(0);
@@ -1057,22 +1100,23 @@
     }
 
     /* Loading State */
-    .btn-primary:disabled {
+    .btn-generate:disabled {
         background: var(--bg-tertiary);
         color: var(--text-tertiary);
         cursor: not-allowed;
         transform: none;
     }
 
-    .btn-primary:disabled:hover {
+    .btn-generate:disabled:hover {
         transform: none;
         box-shadow: var(--shadow-md);
     }
 </style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const form = document.getElementById('preferencesForm');
-        const submitBtn = form.querySelector('.btn-primary');
+        const submitBtn = form.querySelector('.btn-generate');
 
         // Form validation
         form.addEventListener('submit', function (e) {
