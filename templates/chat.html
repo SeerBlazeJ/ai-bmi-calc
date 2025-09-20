@@ -12,79 +12,518 @@
         </a>
     </div>
 </div>
+
 <div class="chat-container">
     <div class="chat-header">
-        <div class="message-avatar bg-success text-white">
-            <i class="fas fa-robot"></i>
+        <div class="d-flex align-items-center">
+            <div class="bot-avatar">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="ms-3">
+                <h5 class="mb-0">Kinetic Edge</h5>
+                <p class="mb-0 text-muted small">AI Health Assistant</p>
+            </div>
         </div>
-        <div class="flex-grow-1">
-            <h5 class="mb-0">Kinetic Edge</h5>
-            <p class="mb-0 small opacity-75">AI Health Assistant</p>
-        </div>
-        <div class="ms-auto">
+        <div class="status-indicator">
             <span class="badge bg-success">Online</span>
         </div>
     </div>
     
-    <div class="messages" id="chatMessages">
-        <!-- Initial static bot message -->
-        <div class="message bot-message animate-fadeIn">
-            <div class="message-row">
-                <div class="message-avatar bg-success text-white">
-                    <i class="fas fa-robot"></i>
+    <div class="messages-container" id="chatMessages">
+        <!-- Initial bot message -->
+        <div class="message bot-message">
+            <div class="message-avatar">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="message-content">
+                <div class="message-bubble">
+                    <p>Hello! I'm Kinetic Edge, your AI health assistant. How can I help you today? You can ask me about nutrition, exercise, weight management, or general health advice. Based on your BMI history, if any...</p>
                 </div>
-                <div class="message-content">
-                    <div class="message-text">
-                        Hello! I'm Kinetic Edge, your AI health assistant. How can I help you today? You can ask me about nutrition, exercise, weight management, or general health advice. Based on your BMI history, if any...
-                    </div>
-                    <div class="message-time-right">Just now</div>
-                </div>
+                <div class="message-time">Just now</div>
             </div>
         </div>
         
         {% for message in messages %}
-        <div class="message user-message animate-fadeIn">
-            <div class="message-row flex-row-reverse">
-                <div class="message-avatar bg-primary text-white">
-                    <i class="fas fa-user"></i>
+        <div class="message user-message">
+            <div class="message-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="message-content">
+                <div class="message-bubble">
+                    <p>{{ message.message }}</p>
                 </div>
-                <div class="message-content">
-                    <div class="message-text">{{ message.message }}</div>
-                    <div class="message-time-right">{{ message.created_at.strftime('%H:%M') }}</div>
-                </div>
+                <div class="message-time">{{ message.created_at.strftime('%H:%M') }}</div>
             </div>
         </div>
         
-        <div class="message bot-message animate-fadeIn">
-            <div class="message-row">
-                <div class="message-avatar bg-success text-white">
-                    <i class="fas fa-robot"></i>
+        <div class="message bot-message">
+            <div class="message-avatar">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="message-content">
+                <div class="message-bubble">
+                    <p>{{ message.response|safe }}</p>
                 </div>
-                <div class="message-content">
-                    <div class="message-text">{{ message.response|safe }}</div>
-                    <div class="message-time-right">{{ message.created_at.strftime('%H:%M') }}</div>
-                </div>
+                <div class="message-time">{{ message.created_at.strftime('%H:%M') }}</div>
             </div>
         </div>
         {% endfor %}
     </div>
     
-    <div class="chat-input">
-        <input type="text" 
-               id="messageInput" 
-               placeholder="Type your health question..." 
-               autocomplete="off"
-               class="form-control" />
-        <button class="send-btn" id="sendButton">
-            <i class="fas fa-paper-plane"></i>
-        </button>
+    <div class="chat-input-container">
+        <div class="input-group">
+            <input type="text" 
+                   id="messageInput" 
+                   placeholder="Type your health question..." 
+                   autocomplete="off"
+                   class="form-control chat-input" />
+            <button class="btn btn-primary send-btn" id="sendButton">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+        <div class="chat-suggestions" id="chatSuggestions">
+            <span class="suggestion-title">Try asking:</span>
+            <div class="suggestion-pills">
+                <button class="suggestion-pill" data-question="What's a healthy BMI range?">BMI Range</button>
+                <button class="suggestion-pill" data-question="How can I lose weight safely?">Weight Loss</button>
+                <button class="suggestion-pill" data-question="What are some good exercises for beginners?">Beginner Exercises</button>
+                <button class="suggestion-pill" data-question="How much water should I drink daily?">Water Intake</button>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+/* Enhanced CSS Variables */
+:root {
+    --primary-color: #5e72e4;
+    --secondary-color: #11cdef;
+    --success-color: #2dce89;
+    --warning-color: #fb6340;
+    --danger-color: #f5365c;
+    --text-primary: #32325d;
+    --text-secondary: #525f7f;
+    --text-tertiary: #8898aa;
+    --bg-primary: #f8f9fe;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f1f3f6;
+    --bg-quaternary: #e9ecef;
+    --card-bg: #ffffff;
+    --border-color: #e3e3e3;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+    --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.15);
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
+}
+
+[data-theme="dark"] {
+    --text-primary: #ffffff;
+    --text-secondary: #c1c9d2;
+    --text-tertiary: #8b92a9;
+    --bg-primary: #0b0e17;
+    --bg-secondary: #151823;
+    --bg-tertiary: #1f2332;
+    --bg-quaternary: #2a2e3f;
+    --card-bg: #151823;
+    --border-color: #2a2e3f;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.3);
+    --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.4);
+}
+
+/* Enhanced Chat Container */
+.chat-container {
+    background: var(--card-bg);
+    border-radius: 20px;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    height: calc(100vh - 200px);
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s var(--ease-smooth);
+}
+
+.chat-container:hover {
+    box-shadow: var(--shadow-2xl);
+}
+
+/* Enhanced Chat Header */
+.chat-header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+[data-theme="dark"] .chat-header {
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+}
+
+.bot-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: var(--shadow-md);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(94, 114, 228, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(94, 114, 228, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(94, 114, 228, 0); }
+}
+
+.chat-header h5 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.chat-header p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.status-indicator .badge {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 50px;
+}
+
+/* Enhanced Messages Container */
+.messages-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Enhanced Message Styles */
+.message {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    animation: fadeIn 0.3s var(--ease-out);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+    .user-message {
+        justify-content: flex-start;
+    }
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.user-message .message-avatar {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.bot-message .message-avatar {
+    background: var(--primary-gradient);
+}
+
+.error-message .message-avatar {
+    background: var(--danger-gradient);
+}
+
+.message-content {
+    max-width: 70%;
+}
+
+    /* Remove order:-1 so avatar stays left for user-message */
+
+.message-bubble {
+    padding: 1rem 1.25rem;
+    border-radius: 18px;
+    margin-bottom: 0.25rem;
+    position: relative;
+    word-wrap: break-word;
+}
+
+.user-message .message-bubble {
+    background: var(--primary-gradient);
+    color: white;
+    border-bottom-right-radius: 4px;
+    box-shadow: var(--shadow-md);
+}
+
+.bot-message .message-bubble {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-bottom-left-radius: 4px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.error-message .message-bubble {
+    background: rgba(245, 54, 92, 0.1);
+    color: var(--danger-color);
+    border: 1px solid rgba(245, 54, 92, 0.3);
+    border-bottom-left-radius: 4px;
+}
+
+[data-theme="dark"] .bot-message .message-bubble {
+    background: var(--bg-quaternary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .error-message .message-bubble {
+    background: rgba(245, 54, 92, 0.2);
+    border-color: rgba(245, 54, 92, 0.4);
+}
+
+.message-bubble p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-align: right;
+}
+
+.user-message .message-time {
+    text-align: left;
+}
+
+/* Enhanced Typing Indicator */
+.typing-indicator .message-bubble {
+    padding: 0.875rem 1.25rem;
+}
+
+.typing-dots {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.typing-dots span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-tertiary);
+    animation: typing 1.4s infinite;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Enhanced Chat Input Container */
+.chat-input-container {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .chat-input-container {
+    background: var(--bg-tertiary);
+}
+
+.input-group {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 0.875rem 1.25rem;
+    border: 2px solid var(--border-color);
+    border-radius: 50px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s var(--ease-smooth);
+    resize: none;
+    min-height: 48px;
+    max-height: 120px;
+}
+
+.chat-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(94, 114, 228, 0.2);
+}
+
+[data-theme="dark"] .chat-input {
+    background: var(--bg-quaternary);
+    border-color: var(--border-color);
+}
+
+.send-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-smooth);
+    box-shadow: var(--shadow-button);
+}
+
+.send-btn:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-button-hover);
+}
+
+.send-btn:active {
+    transform: scale(0.98);
+}
+
+/* Enhanced Chat Suggestions */
+.chat-suggestions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.suggestion-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.suggestion-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.suggestion-pill {
+    padding: 0.5rem 1rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 50px;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-smooth);
+    white-space: nowrap;
+}
+
+.suggestion-pill:hover {
+    background: var(--primary-gradient);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+[data-theme="dark"] .suggestion-pill {
+    background: var(--bg-quaternary);
+    border-color: var(--border-color);
+}
+
+/* Enhanced Buttons */
+.btn-secondary {
+    padding: 0.5rem 1rem;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s var(--ease-smooth);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+[data-theme="dark"] .btn-secondary {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .chat-container {
+        height: calc(100vh - 150px);
+    }
+    
+    .message-content {
+        max-width: 85%;
+    }
+    
+    .message-bubble {
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+    }
+    
+    .suggestion-pills {
+        gap: 0.4rem;
+    }
+    
+    .suggestion-pill {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+}
+</style>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const messageInput = document.getElementById("messageInput");
     const chatMessages = document.getElementById("chatMessages");
     const sendButton = document.getElementById("sendButton");
+    const chatSuggestions = document.getElementById("chatSuggestions");
     
     // Auto-scroll to bottom
     function scrollToBottom() {
@@ -99,17 +538,20 @@ document.addEventListener("DOMContentLoaded", function () {
         const message = messageInput.value.trim();
         if (!message) return;
         
+        // Hide suggestions after first message
+        chatSuggestions.style.display = 'none';
+        
         // Add user message
         const userMessageHtml = `
-        <div class="message user-message animate-fadeIn">
-            <div class="message-row flex-row-reverse">
-                <div class="message-avatar bg-primary text-white">
-                    <i class="fas fa-user"></i>
+        <div class="message user-message">
+            <div class="message-content">
+                <div class="message-bubble">
+                    <p>${message}</p>
                 </div>
-                <div class="message-content">
-                    <div class="message-text">${message}</div>
-                    <div class="message-time-right">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                </div>
+                <div class="message-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+            </div>
+            <div class="message-avatar">
+                <i class="fas fa-user"></i>
             </div>
         </div>`;
         
@@ -119,22 +561,19 @@ document.addEventListener("DOMContentLoaded", function () {
         
         // Add typing indicator
         const botLoadingHtml = `
-        <div class="message bot-message animate-fadeIn">
-            <div class="message-row">
-                <div class="message-avatar bg-success text-white">
-                    <i class="fas fa-robot"></i>
-                </div>
-                <div class="message-content">
-                    <div class="message-text">
-                        <div class="d-flex align-items-center">
-                            <div class="spinner-border spinner-border-sm text-success me-2" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            Thinking...
-                        </div>
+        <div class="message bot-message typing-indicator">
+            <div class="message-avatar">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="message-content">
+                <div class="message-bubble">
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
                     </div>
-                    <div class="message-time-right">...</div>
                 </div>
+                <div class="message-time">...</div>
             </div>
         </div>`;
         
@@ -150,22 +589,22 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(response => response.json())
         .then(data => {
             // Remove loading indicator
-            const loadingMessage = chatMessages.querySelector('.spinner-border').closest('.message');
+            const loadingMessage = chatMessages.querySelector('.typing-indicator');
             if (loadingMessage) {
                 loadingMessage.remove();
             }
             
             // Add bot response
             const botResponseHtml = `
-            <div class="message bot-message animate-fadeIn">
-                <div class="message-row">
-                    <div class="message-avatar bg-success text-white">
-                        <i class="fas fa-robot"></i>
+            <div class="message bot-message">
+                <div class="message-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-bubble">
+                        <p>${data.response}</p>
                     </div>
-                    <div class="message-content">
-                        <div class="message-text">${data.response}</div>
-                        <div class="message-time-right">${data.timestamp}</div>
-                    </div>
+                    <div class="message-time">${data.timestamp}</div>
                 </div>
             </div>`;
             
@@ -176,25 +615,23 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error('Error:', error);
             
             // Remove loading indicator
-            const loadingMessage = chatMessages.querySelector('.spinner-border').closest('.message');
+            const loadingMessage = chatMessages.querySelector('.typing-indicator');
             if (loadingMessage) {
                 loadingMessage.remove();
             }
             
             // Add error message
             const errorHtml = `
-            <div class="message bot-message animate-fadeIn">
-                <div class="message-row">
-                    <div class="message-avatar bg-danger text-white">
-                        <i class="fas fa-exclamation-triangle"></i>
+            <div class="message bot-message error-message">
+                <div class="message-avatar">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-bubble">
+                        <p>I'm having trouble connecting right now. Please try again later.</p>
                     </div>
-                    <div class="message-content">
-                        <div class="message-text">
-                            I'm having trouble connecting right now. Please try again later.
-                        </div>
-                        <div class="message-time-right">
-                            ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </div>
+                    <div class="message-time">
+                        ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                 </div>
             </div>`;
@@ -214,48 +651,22 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
     
-    // Auto-resize input
-    messageInput.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    // Suggestion pills click handlers
+    document.querySelectorAll('.suggestion-pill').forEach(pill => {
+        pill.addEventListener('click', function() {
+            messageInput.value = this.dataset.question;
+            sendMessage();
+        });
     });
     
     // Focus input on load
     messageInput.focus();
     
-    // Add some sample questions for new users
-    if ({{ messages|length }} == 0) {
-        setTimeout(() => {
-            const sampleQuestions = [
-                "What's a healthy BMI range?",
-                "How can I lose weight safely?",
-                "What are some good exercises for beginners?",
-                "How much water should I drink daily?"
-            ];
-            
-            const randomQuestion = sampleQuestions[Math.floor(Math.random() * sampleQuestions.length)];
-            
-            const suggestionHtml = `
-            <div class="text-center mb-3">
-                <small class="text-muted">Try asking:</small>
-                <div class="mt-2">
-                    <button class="btn btn-sm btn-outline-primary me-2 sample-question" data-question="${randomQuestion}">
-                        ${randomQuestion}
-                    </button>
-                </div>
-            </div>`;
-            
-            chatMessages.insertAdjacentHTML("beforeend", suggestionHtml);
-            
-            // Add click handlers to sample questions
-            document.querySelectorAll('.sample-question').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    messageInput.value = this.dataset.question;
-                    sendMessage();
-                });
-            });
-        }, 2000);
-    }
+    // Auto-resize input
+    messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
 });
 </script>
 {% endblock %}
